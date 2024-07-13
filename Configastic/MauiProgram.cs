@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Fluxor;
+using Microsoft.Extensions.Logging;
 
 namespace Configastic
 {
@@ -20,6 +21,11 @@ namespace Configastic
     		builder.Services.AddBlazorWebViewDeveloperTools();
     		builder.Logging.AddDebug();
 #endif
+
+            builder.Services.AddFluxor(o => o
+            .ScanAssemblies(typeof(MauiProgram).Assembly));
+
+            builder.Logging.AddDebug();
 
             return builder.Build();
         }
