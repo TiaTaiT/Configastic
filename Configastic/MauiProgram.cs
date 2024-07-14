@@ -1,5 +1,6 @@
 ﻿using Fluxor;
 using Microsoft.Extensions.Logging;
+using MudBlazor.Services;
 
 namespace Configastic
 {
@@ -24,6 +25,8 @@ namespace Configastic
 
             builder.Services.AddFluxor(o => o
             .ScanAssemblies(typeof(MauiProgram).Assembly));
+
+            builder.Services.AddMudServices();
 
             builder.Logging.AddDebug();
 

@@ -1,0 +1,112 @@
+﻿@page "/settings"
+@using Microsoft.Maui.Storage;
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="pa-4">
+    <MudText Typo="Typo.h5" Class="mb-4">Device Settings</MudText>
+
+    <MudExpansionPanels>
+        <MudExpansionPanel Text="Network Switch Settings">
+            <MudTextField @bind-Value="EltexDefaultIpAddress" Label="Default IPv4 Address" FullWidth="true" />
+            <MudNumericField @bind-Value="EltexDefaultSubnetMask" Label="Subnet Mask" FullWidth="true" T="int" Min="1" Max="24" />
+            <MudNumericField @bind-Value="EltexNewSshPort" Label="SSH Port" FullWidth="true" T="int" Min="1" Max="65535" />
+            <MudTextField @bind-Value="EltexDefaultAdminName" Label="Default User Name" FullWidth="true" />
+            <MudTextField @bind-Value="EltexDefaultAdminPassword" Label="Default Password" FullWidth="true" />
+            <MudTextField @bind-Value="EltexNewAdminName" Label="New User Name" FullWidth="true" />
+            <MudTextField @bind-Value="EltexNewAdminPassword" Label="New Password" FullWidth="true" />
+        </MudExpansionPanel>
+
+        <MudExpansionPanel Text="C2000-Ethernet Settings">
+            <MudTextField @bind-Value="C2000ethernetIpAddress" Label="IP Address" FullWidth="true" />
+            <MudNumericField @bind-Value="C2000ethernetSubnetMask" Label="Subnet Mask" FullWidth="true" T="int" Min="1" Max="24" />
+            <MudNumericField @bind-Value="C2000ethernetRemotePort" Label="Remote UDP Port" FullWidth="true" T="int" Min="1" Max="65535" />
+            <MudNumericField @bind-Value="C2000ethernetLocalPort" Label="Local UDP Port" FullWidth="true" T="int" Min="1" Max="65535" />
+        </MudExpansionPanel>
+
+        <MudExpansionPanel Text="C2000-WIFI Settings">
+            <MudTextField @bind-Value="C2000wifiIpAddress" Label="IP Address" FullWidth="true" />
+            <MudNumericField @bind-Value="C2000wifiSubnetMask" Label="Subnet Mask" FullWidth="true" T="int" Min="1" Max="24" />
+            <MudNumericField @bind-Value="C2000wifiLocalPort" Label="Local UDP Port" FullWidth="true" T="int" Min="1" Max="65535" />
+            <MudNumericField @bind-Value="C2000wifiRemotePort" Label="Remote UDP Port" FullWidth="true" T="int" Min="1" Max="65535" />
+        </MudExpansionPanel>
+
+        <MudExpansionPanel Text="Orion Settings">
+            <MudNumericField @bind-Value="OrionRs485defaultAddress" Label="Orion RS-485 Default Address" FullWidth="true" T="int" Min="1" Max="127" />
+            <MudNumericField @bind-Value="StartRs485Address" Label="Start RS-485 Address" FullWidth="true" T="int" Min="1" Max="126" />
+        </MudExpansionPanel>
+
+    </MudExpansionPanels>
+
+    <MudButton Color="Color.Primary" Variant="Variant.Filled" FullWidth="true" Class="mt-4" OnClick="SaveSettings">Save Settings</MudButton>
+</MudContainer>
+
+@code {
+    private string EltexDefaultIpAddress { get; set; } = "192.168.1.239";
+    private int EltexDefaultSubnetMask { get; set; } = 24;
+    private int EltexNewSshPort { get; set; } = 23;
+    private string EltexDefaultAdminName { get; set; } = "admin";
+    private string EltexDefaultAdminPassword { get; set; } = "admin";
+    private string EltexNewAdminName { get; set; } = "admin";
+    private string EltexNewAdminPassword { get; set; } = "admin123";
+
+    private string C2000ethernetIpAddress { get; set; } = "192.168.127.254";
+    private int C2000ethernetSubnetMask { get; set; } = 24;
+    private int C2000ethernetRemotePort { get; set; } = 40000;
+    private int C2000ethernetLocalPort { get; set; } = 40000;
+
+    private string C2000wifiIpAddress { get; set; } = "10.10.10.1";
+    private int C2000wifiSubnetMask { get; set; } = 24;
+    private int C2000wifiLocalPort { get; set; } = 8100;
+    private int C2000wifiRemotePort { get; set; } = 12000;
+
+    private int OrionRs485defaultAddress { get; set; } = 127;
+    private int StartRs485Address { get; set; } = 3;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        LoadSettings();
+    }
+
+    private void SaveSettings()
+    {
+        Preferences.Default.Set(nameof(EltexDefaultIpAddress), EltexDefaultIpAddress);
+        Preferences.Default.Set(nameof(EltexDefaultSubnetMask), EltexDefaultSubnetMask);
+        Preferences.Default.Set(nameof(EltexNewSshPort), EltexNewSshPort);
+        Preferences.Default.Set(nameof(EltexDefaultAdminName), EltexDefaultAdminName);
+        Preferences.Default.Set(nameof(EltexDefaultAdminPassword), EltexDefaultAdminPassword);
+        Preferences.Default.Set(nameof(EltexNewAdminName), EltexNewAdminName);
+        Preferences.Default.Set(nameof(EltexNewAdminPassword), EltexNewAdminPassword);
+        Preferences.Default.Set(nameof(C2000ethernetIpAddress), C2000ethernetIpAddress);
+        Preferences.Default.Set(nameof(C2000ethernetSubnetMask), C2000ethernetSubnetMask);
+        Preferences.Default.Set(nameof(C2000ethernetRemotePort), C2000ethernetRemotePort);
+        Preferences.Default.Set(nameof(C2000ethernetLocalPort), C2000ethernetLocalPort);
+        Preferences.Default.Set(nameof(C2000wifiIpAddress), C2000wifiIpAddress);
+        Preferences.Default.Set(nameof(C2000wifiSubnetMask), C2000wifiSubnetMask);
+        Preferences.Default.Set(nameof(C2000wifiLocalPort), C2000wifiLocalPort);
+        Preferences.Default.Set(nameof(C2000wifiRemotePort), C2000wifiRemotePort);
+        Preferences.Default.Set(nameof(OrionRs485defaultAddress), OrionRs485defaultAddress);
+        Preferences.Default.Set(nameof(StartRs485Address), StartRs485Address);
+    }
+
+    private void LoadSettings()
+    {
+        EltexDefaultIpAddress = Preferences.Default.Get(nameof(EltexDefaultIpAddress), "192.168.1.239");
+        EltexDefaultSubnetMask = Preferences.Default.Get(nameof(EltexDefaultSubnetMask), 24);
+        EltexNewSshPort = Preferences.Default.Get(nameof(EltexNewSshPort), 23);
+        EltexDefaultAdminName = Preferences.Default.Get(nameof(EltexDefaultAdminName), "admin");
+        EltexDefaultAdminPassword = Preferences.Default.Get(nameof(EltexDefaultAdminPassword), "admin");
+        EltexNewAdminName = Preferences.Default.Get(nameof(EltexNewAdminName), "admin");
+        EltexNewAdminPassword = Preferences.Default.Get(nameof(EltexNewAdminPassword), "admin123");
+        C2000ethernetIpAddress = Preferences.Default.Get(nameof(C2000ethernetIpAddress), "192.168.127.254");
+        C2000ethernetSubnetMask = Preferences.Default.Get(nameof(C2000ethernetSubnetMask), 24);
+        C2000ethernetRemotePort = Preferences.Default.Get(nameof(C2000ethernetRemotePort), 40000);
+        C2000ethernetLocalPort = Preferences.Default.Get(nameof(C2000ethernetLocalPort), 40000);
+        C2000wifiIpAddress = Preferences.Default.Get(nameof(C2000wifiIpAddress), "10.10.10.1");
+        C2000wifiSubnetMask = Preferences.Default.Get(nameof(C2000wifiSubnetMask), 24);
+        C2000wifiLocalPort = Preferences.Default.Get(nameof(C2000wifiLocalPort), 8100);
+        C2000wifiRemotePort = Preferences.Default.Get(nameof(C2000wifiRemotePort), 12000);
+        OrionRs485defaultAddress = Preferences.Default.Get(nameof(OrionRs485defaultAddress), 127);
+        StartRs485Address = Preferences.Default.Get(nameof(StartRs485Address), 3);
+    }
+
+}

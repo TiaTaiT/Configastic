@@ -63,6 +63,11 @@
         <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.70" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="8.0.70" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
+        <PackageReference Include="MudBlazor" Version="7.1.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="wwwroot\css\bootstrap\" />
     </ItemGroup>
 
 </Project>
