@@ -1,4 +1,5 @@
 ﻿using Fluxor;
+using System.Collections.Immutable;
 
 namespace Configastic.Components.Features.Scanner.Store
 {
@@ -6,7 +7,7 @@ namespace Configastic.Components.Features.Scanner.Store
     {
         public bool IsScanning { get; init; }
         public double Progress { get; init; }
-        public List<string> FoundDevices { get; init; } = [];
+        public ImmutableArray<string> FoundDevices { get; init; } = [];
     }
 
     public class ScanningFeature : Feature<ScanningState>

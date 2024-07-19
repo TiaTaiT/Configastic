@@ -18,6 +18,6 @@
 
         [ReducerMethod]
         public static ScanningState ReduceAddFoundDeviceAction(ScanningState state, AddFoundDeviceAction action) =>
-            state with { FoundDevices = new List<string>(state.FoundDevices) { action.Device } };
+            state with { FoundDevices = state.FoundDevices.Add(action.Device) };
     }
 }
