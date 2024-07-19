@@ -2,6 +2,6 @@
 {
     public interface ITransaction
     {
-        public byte[] Transaction(byte address, byte[] sendArray);
+        Task<byte[]> TransactionAsync(byte address, byte[] sendArray);
     }
 }

@@ -64,14 +64,15 @@ namespace Configastic.SharedModels.Models.BolidDevices
             Access = new AccessController(this);
         }
 
-        public byte[] Transaction(byte address, byte[] sendArray)
+        public async Task<byte[]> TransactionAsync(byte address, byte[] sendArray)
         {
-            return AddressTransaction(address, sendArray, Timeouts.ethernetConfig);
+            return await AddressTransactionAsync(address, sendArray, Timeouts.ethernetConfig);
         }
 
-        public override void WriteBaseConfig(Action<int> progressStatus)
+        public override async Task WriteBaseConfigAsync(Action<int> progressStatus)
         {
-            if (!CheckDeviceType())
+            var result = await CheckDeviceTypeAsync();
+            if (!result)
             {
                 return;
             }
@@ -79,7 +80,7 @@ namespace Configastic.SharedModels.Models.BolidDevices
 
             foreach (var command in GetBaseConfig())
             {
-                if (Transaction((byte)AddressRS485, command) == null)
+                if ((await TransactionAsync((byte)AddressRS485, command)) == null)
                     throw new Exception("Transaction was false!");
 
                 progressStatus(Convert.ToInt32(progress));
@@ -140,9 +141,9 @@ namespace Configastic.SharedModels.Models.BolidDevices
             ];
         }
 
-        public override bool Setup(Action<int> updateProgressBar, int modelCode = 0)
+        public override async Task<bool> SetupAsync(Action<int> updateProgressBar, int modelCode = 0)
         {
-            return base.Setup(updateProgressBar, Code);
+            return await base.SetupAsync(updateProgressBar, Code);
         }
     }
 }

@@ -17,12 +17,12 @@
         /// </summary>
         /// <param name="data">Raw translate data</param>
         /// <returns>Raw response from receiver</returns>
-        byte[] Send(byte[] data);
+        Task<byte[]> SendAsync(byte[] data);
 
         /// <summary>
         /// Send data to the port without confirmation from device
         /// </summary>
         /// <param name="data">Raw translate data</param>
-        void SendWithoutСonfirmation(byte[] data);
+        Task SendWithoutСonfirmationAsync(byte[] data);
     }
 }

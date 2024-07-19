@@ -2,6 +2,7 @@
 using Configastic.SharedModels.Interfaces;
 using Configastic.SharedModels.Models.Base;
 using Configastic.SharedModels.Models.Utils;
+using System.Diagnostics;
 using static Configastic.SharedModels.Interfaces.IOrionNetTimeouts;
 
 namespace Configastic.SharedModels.Models.BolidDevices
@@ -15,6 +16,7 @@ namespace Configastic.SharedModels.Models.BolidDevices
 
         public OrionDevice(IPort port)
         {
+            Response = [];
             Port = port;
         }
 
@@ -24,12 +26,12 @@ namespace Configastic.SharedModels.Models.BolidDevices
 
         public byte[] Response { get; private set; }
 
-        public bool ChangeDeviceAddress(byte newDeviceAddress)
+        public async Task<bool> ChangeDeviceAddressAsync(byte newDeviceAddress)
         {
 
             byte[] cmdString = GetChangeAddressPacket(newDeviceAddress);
 
-            var result = AddressTransaction((byte)AddressRS485, cmdString, Timeouts.addressChanging);
+            var result = await AddressTransactionAsync((byte)AddressRS485, cmdString, Timeouts.addressChanging);
 
             if (result.Length <= ResponseNewAddressOffset)
             {
@@ -40,11 +42,11 @@ namespace Configastic.SharedModels.Models.BolidDevices
             return success;
         }
 
-        public bool SetAddress()
+        public async Task<bool> SetAddressAsync()
         {
             byte[] cmdString = GetChangeAddressPacket((byte)AddressRS485);
 
-            var result = AddressTransaction((byte)defaultAddress, cmdString, Timeouts.addressChanging);
+            var result = await AddressTransactionAsync((byte)defaultAddress, cmdString, Timeouts.addressChanging);
 
             if (result == null || result?.Length <= ResponseNewAddressOffset)
                 return false;
@@ -52,11 +54,14 @@ namespace Configastic.SharedModels.Models.BolidDevices
             return result[ResponseNewAddressOffset] == (byte)AddressRS485;
         }
 
-        public void Reboot()
+        public async Task RebootAsync()
         {
+            if (Port == null)
+                return;
+
             byte[] completePacket = GetCompletePacket((byte)AddressRS485, GetRebootPacket());
             Port.Timeout = (int)Timeouts.readModel;
-            Port.SendWithoutСonfirmation(completePacket);
+            await Port.SendWithoutСonfirmationAsync(completePacket);
         }
 
         private byte[] GetRebootPacket()
@@ -80,49 +85,65 @@ namespace Configastic.SharedModels.Models.BolidDevices
             ];
         }
 
-        public bool IsDeviceOnline()
+        public async Task<bool> IsDeviceOnlineAsync()
         {
-            Port.MaxRepetitions = 3;
-            var result = GetModelCode((byte)AddressRS485, out var deviceCode);
-            Port.MaxRepetitions = 15;
-            if(deviceCode != ModelCode)
+            if (Port == null) 
                 return false;
-            return result;
+
+            Port.MaxRepetitions = 3;
+            try
+            {
+                var result = await GetModelCodeAsync((byte)AddressRS485);
+                Port.MaxRepetitions = 15;
+                if (result != ModelCode)
+                    return false;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                return false;
+            }
         }
 
-        public bool GetModelCode(byte deviceAddress, out byte deviceCode)
+        public async Task<byte> GetModelCodeAsync(byte deviceAddress)
         {
             // формируем команду на отправку
             var cmdString = new byte[] { (byte)OrionCommands.GetModel, 0x00, 0x00 };
             
-            deviceCode = 0;
+            byte deviceCode;
 
-            Response = AddressTransaction(deviceAddress, cmdString, Timeouts.readModel);
+            Response = await AddressTransactionAsync(deviceAddress, cmdString, Timeouts.readModel);
 
-            if(Response.Length == 0)
-                return false;
+            if (Response.Length == 0)
+                throw new Exception("");
                 
             deviceCode = Response[ResponseDeviceModelOffset];
-            return true;
+            return deviceCode;
         }
 
-        public virtual void WriteBaseConfig(Action<int> progressStatus)
+        public virtual Task WriteBaseConfigAsync(Action<int> progressStatus)
         {
-
+            return Task.CompletedTask;
         }
 
-        public virtual void WriteConfig(Action<int> progressStatus)
+        public virtual Task WriteConfigAsync(Action<int> progressStatus)
         {
-
+            return Task.CompletedTask;
         }
 
-        public byte[] AddressTransaction(byte address,
+        public async Task<byte[]> AddressTransactionAsync(byte address,
                                          byte[] sendArray,
                                          IOrionNetTimeouts.Timeouts timeout)
         {
+            if (Port == null)
+            {
+                throw new ArgumentNullException("Port");
+            }
+
             byte[] completePacket = GetCompletePacket(address, sendArray);
             Port.Timeout = (int)timeout;
-            var response = Port.Send(completePacket);
+            var response = await Port.SendAsync(completePacket);
 
             return GetResponseWithoutAuxiliaryData(response);
         }
@@ -131,7 +152,7 @@ namespace Configastic.SharedModels.Models.BolidDevices
         {
             var addr = new[] { address };
             var sendCommand = ArraysHelper.CombineArrays(addr, sendArray);
-            var completePacket = GetComplitePacket(sendCommand);
+            var completePacket = OrionDevice.GetComplitePacket(sendCommand);
             return completePacket;
         }
 
@@ -147,10 +168,10 @@ namespace Configastic.SharedModels.Models.BolidDevices
             // Удаляем второй байт (Длина посылки)
             response.RemoveAt(1);
 
-            return response.ToArray();
+            return [.. response];
         }
 
-        private byte[] GetComplitePacket(byte[] sendArray)
+        private static byte[] GetComplitePacket(byte[] sendArray)
         {
             byte bytesCounter = 2; //сразу начнём считать с двойки, т.к. всё равно придётся добавить два байта(сам байт длины команды, и счётчик команд)
             var lst = new List<byte>();
@@ -169,38 +190,50 @@ namespace Configastic.SharedModels.Models.BolidDevices
             return cmd;
         }
 
-        public virtual bool Setup(
-            Action<int> updateProgressBar, 
-            int modelCode = 0)
+        public virtual async Task<bool> SetupAsync(Action<int> updateProgressBar, int modelCode = 0)
         {
-            if(!GetModelCode((byte)defaultAddress, out var deviceCode))
+            try
+            {
+                byte deviceCode = await GetModelCodeAsync((byte)defaultAddress);
+                if (deviceCode != ModelCode)
+                    return false;
+            }
+            catch (Exception ex) 
+            {
+                Debug.WriteLine(ex.Message);
                 return false;
+            }
 
-            if (deviceCode != ModelCode)
+            await SetAddressAsync();
+
+            byte deviceCodeWithNewAddress;
+
+            try
+            {
+                deviceCodeWithNewAddress = await GetModelCodeAsync((byte)AddressRS485);
+                if (deviceCodeWithNewAddress != ModelCode)
+                    return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
                 return false;
+            }
 
-            SetAddress();
-
-            if (!GetModelCode((byte)AddressRS485, out var deviceCodeWithNewAddress))
-                return false;
-
-            if (deviceCodeWithNewAddress != ModelCode)
-                return false;
-
-            WriteBaseConfig(updateProgressBar);
+            await WriteBaseConfigAsync(updateProgressBar);
 
             return true;
         }
 
-        public bool CheckDeviceType()
+        public async Task<bool> CheckDeviceTypeAsync()
         {
-            var result = GetModelCode((byte)AddressRS485, out var deviceCode);
-            if (!result)
+            try
             {
-                throw new Exception("Device didn't respond!");
+                var result = await GetModelCodeAsync((byte)AddressRS485);
             }
-            if (deviceCode != ModelCode)
-            { 
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
                 return false;
             }
             return true;

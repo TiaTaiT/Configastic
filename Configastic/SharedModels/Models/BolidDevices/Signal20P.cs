@@ -1,6 +1,7 @@
 ﻿using Configastic.SharedModels.Interfaces;
 using Configastic.SharedModels.Models.BolidDevices.ElectricModules;
 using System.Collections;
+using System.Runtime.CompilerServices;
 using static Configastic.SharedModels.Interfaces.IOrionNetTimeouts;
 
 namespace Configastic.SharedModels.Models.BolidDevices
@@ -112,42 +113,50 @@ namespace Configastic.SharedModels.Models.BolidDevices
         }
         #endregion Constructor
 
-        public byte[] Transaction(byte address, byte[] sendArray)
+        public async Task<byte[]> TransactionAsync(byte address, byte[] sendArray)
         {
-            return AddressTransaction(address, sendArray, Timeouts.ethernetConfig);
+            return await AddressTransactionAsync(address, sendArray, Timeouts.ethernetConfig);
         }
 
-        public override void WriteConfig(Action<int> progressStatus)
+        public override async Task WriteConfigAsync(Action<int> progressStatus)
         {
-            CheckDeviceType();
+            if ((await CheckDeviceTypeAsync()) == false)
+            {
+                return;
+            }
+
             var progress = 0.0;
 
             foreach (var command in GetConfig())
             {
-                if (Transaction((byte)AddressRS485, command) == null)
+                if ((await TransactionAsync((byte)AddressRS485, command)) == null)
                     throw new Exception("Transaction was false!");
 
                 progressStatus(Convert.ToInt32(progress));
                 progress += 0.364;
             }
-            Reboot();
+            await RebootAsync();
             progressStatus(100);
         }
 
-        public override void WriteBaseConfig(Action<int> progressStatus)
+        public override async Task WriteBaseConfigAsync(Action<int> progressStatus)
         {
-            CheckDeviceType();
+            if ((await CheckDeviceTypeAsync()) == false)
+            {
+                return;
+            }
+
             var progress = 0.0;
 
             foreach (var command in GetBaseConfig())
             {
-                if (Transaction((byte)AddressRS485, command) == null)
+                if ((await TransactionAsync((byte)AddressRS485, command)) == null)
                     throw new Exception("Transaction was false!");
 
                 progressStatus(Convert.ToInt32(progress));
                 progress += 1.587;
             }
-            Reboot();
+            await RebootAsync();
             progressStatus(100);
         }
 
@@ -155,8 +164,8 @@ namespace Configastic.SharedModels.Models.BolidDevices
         {
             var config = new List<byte[]>
             {
-                Signal20P.GetPromoter(),
-                Signal20P.GetPromoter(),
+                GetPromoter(),
+                GetPromoter(),
                 GetTwoPowerInputsMonitor(),
             };
             config.AddRange(GetInputsProps(GetBaseInputsProps));
@@ -168,8 +177,8 @@ namespace Configastic.SharedModels.Models.BolidDevices
         {
             var config = new List<byte[]>
             {
-                Signal20P.GetPromoter(),
-                Signal20P.GetPromoter(),
+                GetPromoter(),
+                GetPromoter(),
                 GetTwoPowerInputsMonitor(),
             };
             config.AddRange(GetInputsProps(GetInputProperties));
@@ -205,7 +214,7 @@ namespace Configastic.SharedModels.Models.BolidDevices
 
             if (relay is SupervisedRelay supervisedRelay)
             {
-                result.AddRange(Signal20P.GetSupervisedRelayConfig(offset, supervisedRelay));
+                result.AddRange(GetSupervisedRelayConfig(offset, supervisedRelay));
             }
 
             return result;
@@ -310,8 +319,8 @@ namespace Configastic.SharedModels.Models.BolidDevices
             bytes = BitConverter.GetBytes((ushort)(offset + (ushort)InputPropertiesOffsets.InputType));
             result.Add([(byte)OrionCommands.WriteToDeviceMemoryMap, bytes[0], bytes[1], 0x00, (byte)shleif.InputType]);
 
-            result.AddRange(Signal20P.GetBitsShleifTune(shleif, offset));
-            result.AddRange(Signal20P.GetBitsShleifRelayTune(shleif, offset));
+            result.AddRange(GetBitsShleifTune(shleif, offset));
+            result.AddRange(GetBitsShleifRelayTune(shleif, offset));
 
             return result;
         }
@@ -354,8 +363,8 @@ namespace Configastic.SharedModels.Models.BolidDevices
             bytes = BitConverter.GetBytes((ushort)(offset + (ushort)InputPropertiesOffsets.RelayActivationDelay5));
             result.Add([(byte)OrionCommands.WriteToDeviceMemoryMap, bytes[0], bytes[1], 0x00, shleif.RelayActivationDelay5]);
 
-            result.AddRange(Signal20P.GetBitsShleifTune(shleif, offset));
-            result.AddRange(Signal20P.GetBitsShleifRelayTune(shleif, offset));
+            result.AddRange(GetBitsShleifTune(shleif, offset));
+            result.AddRange(GetBitsShleifRelayTune(shleif, offset));
 
             return result;
         }
@@ -406,19 +415,9 @@ namespace Configastic.SharedModels.Models.BolidDevices
             return [0x43, 0x00, 0x00, 0x00, 0x40]; // Unrecognized pattern
         }
 
-        private void CheckDeviceType()
+        public override async Task<bool> SetupAsync(Action<int> updateProgressBar, int modelCode = 0)
         {
-            var result = GetModelCode((byte)AddressRS485, out var deviceCode);
-            if(!result)
-                throw new Exception("Device doesn't respond!");
-            if (deviceCode != Code)
-                throw new Exception("Wrong model!");
-
-        }
-
-        public override bool Setup(Action<int> updateProgressBar, int modelCode = 0)
-        {
-            return base.Setup(updateProgressBar, Code);
+            return await base.SetupAsync(updateProgressBar, Code);
         }
     }
 }

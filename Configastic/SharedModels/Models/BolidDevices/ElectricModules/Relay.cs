@@ -71,11 +71,11 @@ namespace Configastic.SharedModels.Models.BolidDevices.ElectricModules
         public bool Events { get; set; } = false;
         public bool EndlessControlTime = true;
 
-        public bool TurnOn()
+        public async Task<bool> TurnOnAsync()
         {
             var serialPort = parentDevice.Port;
             var address = (byte)parentDevice.AddressRS485;
-            var result = parentDevice.AddressTransaction(address, [0x15, RelayIndex, 0x01], IOrionNetTimeouts.Timeouts.addressChanging);
+            var result = await parentDevice.AddressTransactionAsync(address, [0x15, RelayIndex, 0x01], IOrionNetTimeouts.Timeouts.addressChanging);
             
             if (result == null || result.Length < 3)
                 return false;
@@ -85,11 +85,11 @@ namespace Configastic.SharedModels.Models.BolidDevices.ElectricModules
 
             return false;
         }
-        public bool TurnOff()
+        public async Task<bool> TurnOffAsync()
         {
             var serialPort = parentDevice.Port;
             var address = (byte)parentDevice.AddressRS485;
-            var result = parentDevice.AddressTransaction(address, [0x15, RelayIndex, 0x02], IOrionNetTimeouts.Timeouts.addressChanging);
+            var result = await parentDevice.AddressTransactionAsync(address, [0x15, RelayIndex, 0x02], IOrionNetTimeouts.Timeouts.addressChanging);
             
             if (result == null || result.Length < 3)
                 return false;

@@ -1,4 +1,5 @@
-﻿using Fluxor;
+﻿using Configastic.SharedModels.Interfaces;
+using Fluxor;
 using System.Collections.Immutable;
 
 namespace Configastic.Components.Features.Scanner.Store
@@ -7,7 +8,7 @@ namespace Configastic.Components.Features.Scanner.Store
     {
         public bool IsScanning { get; init; }
         public double Progress { get; init; }
-        public ImmutableArray<string> FoundDevices { get; init; } = [];
+        public ImmutableArray<IOrionDevice> FoundDevices { get; init; } = [];
     }
 
     public class ScanningFeature : Feature<ScanningState>
@@ -25,5 +26,5 @@ namespace Configastic.Components.Features.Scanner.Store
     public record StartScanningAction();
     public record StopScanningAction();
     public record UpdateProgressAction(double Progress);
-    public record AddFoundDeviceAction(string Device);
+    public record AddFoundDeviceAction(IOrionDevice Device);
 }

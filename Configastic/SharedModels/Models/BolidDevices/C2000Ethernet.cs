@@ -1,5 +1,6 @@
 ﻿using Configastic.SharedModels.Interfaces;
 using Configastic.SharedModels.Models.Utils;
+using System.Diagnostics;
 using System.Text;
 using static Configastic.SharedModels.Interfaces.IOrionNetTimeouts;
 using static System.String;
@@ -143,9 +144,9 @@ namespace Configastic.SharedModels.Models.BolidDevices
 
         //public List<int> RemoteUDPList { get; set; } = new List<int>();
 
-        public List<C2000Ethernet> RemoteDevicesList { get; set; } = new List<C2000Ethernet>();
+        public List<C2000Ethernet> RemoteDevicesList { get; set; } = [];
 
-        public string RemoteIpTrasparentMode { get; set; }
+        public string RemoteIpTrasparentMode { get; set; } = string.Empty;
 
         public Duplex DuplexMode { get; set; }
 
@@ -165,7 +166,7 @@ namespace Configastic.SharedModels.Models.BolidDevices
 
         public UdpType UdpPortType { get; set; }
 
-        public string CryptoKey { get; set; }
+        public string CryptoKey { get; set; } = string.Empty;
 
         public byte ConfirmationTimeout { get; set; }
 
@@ -188,10 +189,10 @@ namespace Configastic.SharedModels.Models.BolidDevices
         {
             ModelCode = Code;
             Model = "С2000-Ethernet";
-            SupportedModels = new List<string>
-            {
+            SupportedModels =
+            [
                 Model,
-            };
+            ];
 
             AddressIP = "192.168.2.11";
             Netmask = "255.255.254.0";
@@ -229,56 +230,61 @@ namespace Configastic.SharedModels.Models.BolidDevices
         }
         #endregion Constructors
 
-        public byte[] Transaction(byte address, byte[] sendArray)
+        public async Task<byte[]> TransactionAsync(byte address, byte[] sendArray)
         {
-            return AddressTransaction(address, sendArray, Timeouts.ethernetConfig);
+            return await AddressTransactionAsync(address, sendArray, Timeouts.ethernetConfig);
         }
 
         //We must override default implementaition of the Setup() because in C2000-Ethernet we need upload config and after that change address
-        public override bool Setup(Action<int> progressStatus, int modelCode = 0)
+        public override async Task<bool> SetupAsync(Action<int> progressStatus, int modelCode = 0)
         {
-            var result = GetModelCode((byte)defaultAddress, out var currentDeviceCode);
-            
-            if(!result)
-                return false;
-
-            if (currentDeviceCode != ModelCode)
+            byte currentDeviceCode;
+            try
             {
+                currentDeviceCode = await GetModelCodeAsync((byte)defaultAddress);
+                if (currentDeviceCode != ModelCode)
+                {
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
                 return false;
             }
+            
+            await WriteBaseConfigAsync(progressStatus);
 
-            WriteBaseConfig(progressStatus);
-
-            SetAddress();
+            await SetAddressAsync();
 
             return true;
         }
 
-        public override void WriteConfig(Action<int> progressStatus)
+        public override async Task WriteConfigAsync(Action<int> progressStatus)
         {
-            UploadConfig(1.66, defaultAddress, GetConfig(), progressStatus);
+            await UploadConfigAsync(1.66, defaultAddress, GetConfig(), progressStatus);
         }
 
-        public override void WriteBaseConfig(Action<int> progressStatus)
+        public override async Task WriteBaseConfigAsync(Action<int> progressStatus)
         {
-            UploadConfig(3.0, defaultAddress, GetBaseConfig(), progressStatus);
+            await UploadConfigAsync(3.0, defaultAddress, GetBaseConfig(), progressStatus);
         }
 
-        private void UploadConfig(double progressStep, uint address, IEnumerable<byte[]> config, Action<int> progressStatus)
+        private async Task UploadConfigAsync(double progressStep, uint address, IEnumerable<byte[]> config, Action<int> progressStatus)
         {
             var progress = 1.0;
             progressStatus(Convert.ToInt32(progress));
 
             foreach (var command in config)
             {
-                if (Transaction((byte)address, command) == null)
+                if ((await TransactionAsync((byte)address, command)) == null)
                     throw new Exception("Transaction false!");
 
                 progressStatus(Convert.ToInt32(progress));
                 progress += progressStep;
             }
 
-            Reboot();
+            await RebootAsync();
 
             Thread.Sleep((int)Timeouts.restartC2000Ethernet);
 
@@ -289,20 +295,20 @@ namespace Configastic.SharedModels.Models.BolidDevices
         {
             var config = new List<byte[]>
             {
-                C2000Ethernet.ReadDeviceNetworkSettings(),
+                ReadDeviceNetworkSettings(),
                 GetDeviceNetName(NetName),
-                C2000Ethernet.GetEthernetTune(AddressIP, Netmask, DefaultGateway, FirstDns, SecondDns),
-                C2000Ethernet.GetDhcpStatus(DhcpEnable),
-                C2000Ethernet.GetDhcpStatus(Dhcp),
-                C2000Ethernet.GetMasterSlaveTransparent(NetworkMode),
-                C2000Ethernet.GetInterfaceType(InterfaceType),
+                GetEthernetTune(AddressIP, Netmask, DefaultGateway, FirstDns, SecondDns),
+                GetDhcpStatus(DhcpEnable),
+                GetDhcpStatus(Dhcp),
+                GetMasterSlaveTransparent(NetworkMode),
+                GetInterfaceType(InterfaceType),
 
-                C2000Ethernet.GetMasterSlaveUdp(MasterSlaveUdp),
+                GetMasterSlaveUdp(MasterSlaveUdp),
 
-                C2000Ethernet.GetFreeConnectionTune(FreeConnectionUdpType, AllowFreeConnection),
-                C2000Ethernet.GetFreeConnectionUdp(FreeConnectionUdp),
-                C2000Ethernet.GetTransparentTune(TransparentUdp, TransparentProtocol, TransparentCrypto),
-                C2000Ethernet.GetSecondPowerControl(),
+                GetFreeConnectionTune(FreeConnectionUdpType, AllowFreeConnection),
+                GetFreeConnectionUdp(FreeConnectionUdp),
+                GetTransparentTune(TransparentUdp, TransparentProtocol, TransparentCrypto),
+                GetSecondPowerControl(),
             };
             config.AddRange(GetRemoteDevices(RemoteDevicesList));
 
@@ -313,26 +319,26 @@ namespace Configastic.SharedModels.Models.BolidDevices
         {
             var config = new List<byte[]>
             {
-                C2000Ethernet.ReadDeviceNetworkSettings(),
+                ReadDeviceNetworkSettings(),
                 GetDeviceNetName(NetName),
-                C2000Ethernet.GetEthernetTune(AddressIP, Netmask, DefaultGateway, FirstDns, SecondDns),
-                C2000Ethernet.GetDhcpStatus(DhcpEnable),
-                C2000Ethernet.GetDhcpStatus(Dhcp),
-                C2000Ethernet.GetMasterSlaveTransparent(NetworkMode),
-                C2000Ethernet.GetInterfaceType(InterfaceType),
-                C2000Ethernet.GetConnectionSpeed(ConnectionSpeed),
-                C2000Ethernet.GetParityStopTimeoutSign(FrameFormat, TimeoutSign, PauseSign, Optimization),
-                C2000Ethernet.GetTimeout(Timeout),
-                C2000Ethernet.GetPause(Pause),
-                C2000Ethernet.GetAccessNotifySign(AccessNotifySign),
-                C2000Ethernet.GetPauseBeforeResponseRs(PauseBeforeResponseRs),
-                C2000Ethernet.GetMasterSlaveUdp(MasterSlaveUdp),
-                C2000Ethernet.GetConfirmationTimeout(ConfirmationTimeout),
-                C2000Ethernet.GetConnectionTimeout(ConnectionTimeout),
-                C2000Ethernet.GetFreeConnectionTune(FreeConnectionUdpType, AllowFreeConnection),
-                C2000Ethernet.GetFreeConnectionUdp(FreeConnectionUdp),
-                C2000Ethernet.GetTransparentTune(TransparentUdp, TransparentProtocol, TransparentCrypto),
-                C2000Ethernet.GetSecondPowerControl(),
+                GetEthernetTune(AddressIP, Netmask, DefaultGateway, FirstDns, SecondDns),
+                GetDhcpStatus(DhcpEnable),
+                GetDhcpStatus(Dhcp),
+                GetMasterSlaveTransparent(NetworkMode),
+                GetInterfaceType(InterfaceType),
+                GetConnectionSpeed(ConnectionSpeed),
+                GetParityStopTimeoutSign(FrameFormat, TimeoutSign, PauseSign, Optimization),
+                GetTimeout(Timeout),
+                GetPause(Pause),
+                GetAccessNotifySign(AccessNotifySign),
+                GetPauseBeforeResponseRs(PauseBeforeResponseRs),
+                GetMasterSlaveUdp(MasterSlaveUdp),
+                GetConfirmationTimeout(ConfirmationTimeout),
+                GetConnectionTimeout(ConnectionTimeout),
+                GetFreeConnectionTune(FreeConnectionUdpType, AllowFreeConnection),
+                GetFreeConnectionUdp(FreeConnectionUdp),
+                GetTransparentTune(TransparentUdp, TransparentProtocol, TransparentCrypto),
+                GetSecondPowerControl(),
             };
             config.AddRange(GetRemoteDevices(RemoteDevicesList));
 

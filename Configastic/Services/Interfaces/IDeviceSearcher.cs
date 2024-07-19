@@ -2,10 +2,13 @@
 
 namespace Configastic.Services.Interfaces
 {
-    internal interface IDeviceSearcher
+    public interface IDeviceSearcher
     {
-        IPort Port { get; set; }
-
-        IEnumerable<IOrionDevice> SearchDevices(Action<int> updateProgressBar, CancellationToken cancellationToken);
+        Task SearchDevicesAsync(
+            int localUdpPort,
+            int remoteUdpPort,
+            Action<IOrionDevice> onDeviceFound,
+            Action<double> onProgressUpdate,
+            CancellationToken cancellationToken);
     }
 }
