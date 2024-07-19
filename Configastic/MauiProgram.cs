@@ -1,4 +1,6 @@
-﻿using Fluxor;
+﻿using Configastic.Services.Interfaces;
+using Configastic.Services.Services;
+using Fluxor;
 using Microsoft.Extensions.Logging;
 using MudBlazor.Services;
 
@@ -25,6 +27,9 @@ namespace Configastic
 
             builder.Services.AddFluxor(o => o
             .ScanAssemblies(typeof(MauiProgram).Assembly));
+
+            builder.Services.AddScoped<IDeviceScanningService,DeviceScanningService>();
+            builder.Services.AddScoped<IDeviceSearcher, BolidDeviceSearcher>();
 
             builder.Services.AddMudServices();
 

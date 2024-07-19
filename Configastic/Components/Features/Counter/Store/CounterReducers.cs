@@ -1,6 +1,6 @@
 ﻿using Fluxor;
 
-namespace Configastic.Store.CounterUseCase
+namespace Configastic.Components.Features.Counter.Store
 {
     public class CounterReducers
     {

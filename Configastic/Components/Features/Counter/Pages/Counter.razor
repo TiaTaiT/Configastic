@@ -1,6 +1,6 @@
 ﻿@page "/counter"
+@using Configastic.Components.Features.Counter.Store
 @using Fluxor.Blazor.Web.Components
-@using Configastic.Store.CounterUseCase
 @inherits FluxorComponent
 @inject IState<CounterState> CounterState
 @inject Fluxor.IDispatcher Dispatcher

@@ -1,0 +1,141 @@
+﻿@page "/scanner"
+
+@using Configastic.Services.Interfaces
+@using Fluxor.Blazor.Web.Components
+@using Configastic.Components.Features.Scanner.Store
+@using Configastic.Services.Services
+
+@inherits FluxorComponent
+
+@inject IState<ScanningState> ScanningState
+@inject IDispatcher Dispatcher
+@inject IDeviceScanningService ScanningService
+
+<MudContainer 
+    MaxWidth="MaxWidth.ExtraLarge" 
+    Class="pa-0">
+    <MudPaper 
+        Elevation="3" 
+        Class="pa-4 mb-4" 
+        Style="position: sticky; top: 0; z-index: 1;">
+        <MudText 
+            Typo="Typo.h5" 
+            Class="mb-4">Device Scanning
+        </MudText>
+        
+        <MudProgressLinear 
+            Color="Color.Primary" 
+            Value="@ScanningState.Value.Progress" 
+            Class="my-4" />
+        
+        @if (_isAdvancedMode)
+        {
+            <MudSlider 
+                @bind-Value="_searchRange" 
+                Min="0" 
+                Max="100" 
+                Step="1" 
+                TickMarks="true" 
+                TickMarkLabels="@_rangeLabels" 
+                Class="mb-4" />
+        }
+        
+        <MudGrid>
+            <MudItem xs="6">
+                <MudSwitch 
+                    @bind-Value="@_isAdvancedMode" 
+                    Color="Color.Primary" 
+                    Label="Advanced Mode" 
+                    T="bool" />
+            </MudItem>
+            <MudItem xs="6" Class="d-flex justify-end align-center">
+                <MudText 
+                    Class="mr-2">@(ScanningState.Value.IsScanning ? "Scanning" : "Scan")
+                </MudText>
+                <MudSwitch 
+                    Value="@ScanningState.Value.IsScanning" 
+                    Color="Color.Primary" 
+                    T="bool" 
+                    ValueChanged="OnScanningToggled" />
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudPaper 
+        Class="pa-4" 
+        Style="height: calc(100vh - 290px); overflow-y: auto;">
+        <MudList 
+            Clickable="true" 
+            Dense="true" 
+            T="object">
+            @foreach (var device in ScanningState.Value.FoundDevices)
+            {
+                <MudListItem 
+                    T="string">
+                    <MudGrid>
+                        <MudItem xs="8">
+                            <MudText>@device</MudText>
+                        </MudItem>
+                        <MudItem 
+                            xs="4" 
+                            Class="d-flex justify-end">
+                            <MudButton 
+                                Variant="Variant.Outlined" 
+                                Size="Size.Small" 
+                                Class="mr-2">Info
+                            </MudButton>
+                            <MudButton 
+                                Variant="Variant.Outlined" 
+                                Size="Size.Small">Connect
+                            </MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudListItem>
+            }
+        </MudList>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private bool _isAdvancedMode = false;
+    private double _searchRange = 50;
+    private string[] _rangeLabels = new[] { "0", "25", "50", "75", "100" };
+    private CancellationTokenSource _cts;
+
+    private async Task OnScanningToggled(bool value)
+    {
+        if (value)
+        {
+            Dispatcher.Dispatch(new StartScanningAction());
+            await StartScanning();
+        }
+        else
+        {
+            Dispatcher.Dispatch(new StopScanningAction());
+            _cts?.Cancel();
+        }
+    }
+
+    private async Task StartScanning()
+    {
+        _cts = new CancellationTokenSource();
+
+        try
+        {
+            await ScanningService.ScanNetworkAsync(
+                "192.168.127", 1, 254,
+                device => Dispatcher.Dispatch(new AddFoundDeviceAction(device)),
+                progress => Dispatcher.Dispatch(new UpdateProgressAction(progress)),
+                _cts.Token
+            );
+        }
+        catch (OperationCanceledException)
+        {
+            // Scanning was stopped by the user
+        }
+        finally
+        {
+            Dispatcher.Dispatch(new StopScanningAction());
+        }
+    }
+}
