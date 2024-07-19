@@ -3,7 +3,6 @@ using Configastic.SharedModels.Models.Utils;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 
 namespace Configastic.SharedModels.Models.Ports
 {
@@ -51,7 +50,7 @@ namespace Configastic.SharedModels.Models.Ports
                         if (result.Received)
                         {
                             // Received a response
-                            var response = result.Buffer;
+                            var response = result.Buffer.Skip(5).ToArray();
                             return response; // Success, exit the method
                         }
                         else

@@ -68,7 +68,10 @@ namespace Configastic.SharedModels.Models.BolidDevices
             };
         }
 
-        public async Task<IEnumerable<IOrionDevice>> SearchOnlineDevices(Action<IOrionDevice> onDeviceFound, Action<double> progressStatus, CancellationToken token)
+        public async Task<IEnumerable<IOrionDevice>> SearchOnlineDevices(
+            Action<IOrionDevice> onDeviceFound, 
+            Action<double> progressStatus, 
+            CancellationToken token)
         {
             if (Port == null)
             {
