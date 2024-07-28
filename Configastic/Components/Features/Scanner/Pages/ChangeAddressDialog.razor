@@ -1,0 +1,50 @@
+﻿@page "/ChangeAddressDialog"
+@namespace Configastic.Components
+@inject MudBlazor.IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.h6">@DeviceName</MudText>
+        <MudText Typo="Typo.body1">Current Address: @CurrentDeviceAddress</MudText>
+        <div Class="d-flex justify-end">
+            <MudText Typo="Typo.body1">New Address: </MudText>
+            <MudNumericField @bind-Value="NewAddress"
+                             FullWidth="true"
+                             T="int"
+                             Min="1"
+                             Max="127"
+                             Style="width: 64px;" />
+
+        </div>
+        
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Submit">Submit</MudButton>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    MudDialogInstance MudDialog
+    {
+        get;
+        set;
+    }
+
+    [Parameter] public string DeviceName { get; set; }
+    [Parameter] public int CurrentDeviceAddress { get; set; }
+
+    private int NewAddress { get; set; } = 127;
+
+    private void Submit()
+    {
+        MudDialog.Close(DialogResult.Ok(NewAddress));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Close(DialogResult.Cancel());
+    }
+}
+

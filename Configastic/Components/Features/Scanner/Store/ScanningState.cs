@@ -27,4 +27,6 @@ namespace Configastic.Components.Features.Scanner.Store
     public record StopScanningAction();
     public record UpdateProgressAction(double Progress);
     public record AddFoundDeviceAction(IOrionDevice Device);
+    public record UpdateFoundDeviceAction(IOrionDevice UpdatedDevice);
+    public record ClearFoundDeviceAction();
 }

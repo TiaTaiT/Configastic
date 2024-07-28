@@ -3,6 +3,7 @@ using Configastic.SharedModels.Interfaces;
 using Configastic.SharedModels.Models.Base;
 using Configastic.SharedModels.Models.Utils;
 using System.Diagnostics;
+using System.Net;
 using static Configastic.SharedModels.Interfaces.IOrionNetTimeouts;
 
 namespace Configastic.SharedModels.Models.BolidDevices
@@ -11,7 +12,7 @@ namespace Configastic.SharedModels.Models.BolidDevices
     {
         private const int ResponseNewAddressOffset = 2;
         private const int ResponseDeviceModelOffset = 1;
-        protected readonly uint defaultAddress = 127;
+        protected const uint defaultAddress = 127;
         private static byte commandCounter;
 
         public OrionDevice(IPort port)
@@ -38,6 +39,8 @@ namespace Configastic.SharedModels.Models.BolidDevices
                 throw new InvalidDeviceResponseException(result, "Device response was not valid or null");
             }
             var success = result[ResponseNewAddressOffset] == newDeviceAddress;
+
+            AddressRS485 = newDeviceAddress;
 
             return success;
         }
@@ -116,7 +119,7 @@ namespace Configastic.SharedModels.Models.BolidDevices
             Response = await AddressTransactionAsync(deviceAddress, cmdString, Timeouts.readModel);
 
             if (Response.Length == 0)
-                throw new Exception("");
+                throw new DeviceIsOfflineException($"Device with address {deviceAddress} is offline");
                 
             deviceCode = Response[ResponseDeviceModelOffset];
             return deviceCode;

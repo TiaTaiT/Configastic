@@ -32,6 +32,7 @@ namespace Configastic
             builder.Services.AddScoped<IDeviceSearcher, BolidDeviceSearcher>();
 
             builder.Services.AddMudServices();
+            builder.Services.AddMudBlazorDialog();
 
             builder.Logging.AddDebug();
 

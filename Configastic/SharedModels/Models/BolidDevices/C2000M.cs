@@ -1,5 +1,7 @@
-﻿
+﻿using Configastic.Exceptions;
 using Configastic.SharedModels.Interfaces;
+using System.Diagnostics;
+using System.Net;
 
 namespace Configastic.SharedModels.Models.BolidDevices
 {
@@ -8,6 +10,12 @@ namespace Configastic.SharedModels.Models.BolidDevices
         public const int Code = 0;
 
         private readonly Dictionary<byte, Func<IOrionDevice>> _bolidDict;
+
+        private int _id;
+        private double _progress;
+        private double _progressStep;
+
+        public List<IOrionDevice> OnlineDevices { get; set; } = [];
 
         public C2000M(IPort port) : base(port)
         {
@@ -68,7 +76,51 @@ namespace Configastic.SharedModels.Models.BolidDevices
             };
         }
 
+        public async Task<IOrionDevice> GetNewOnlineDevice(int address)
+        {
+            var deviceCode = await GetModelCodeAsync((byte)address);
+            var deviceFunc = _bolidDict[deviceCode];
+
+            return deviceFunc();
+        }
+
+        public async Task<byte> GetFirstFreeAddress(
+            int startAddress,
+            Action<IOrionDevice> onDeviceFound,
+            Action cleanDeviceFound,
+            CancellationToken token)
+        {
+            if (Port == null)
+            {
+                throw new ArgumentNullException("port is null!");
+            }
+
+            var startAddr = GetValidAddress(startAddress);
+
+            Port.MaxRepetitions = 3;
+            byte address = 0;
+            cleanDeviceFound();
+            for (byte i = startAddr; i < defaultAddress; i++)
+            {
+                if (token.IsCancellationRequested)
+                {
+                    break;
+                }
+
+                address = await CheckDevice(onDeviceFound, i);
+
+                if (address == 0)
+                    continue;
+
+                break;
+            }
+
+            Port.MaxRepetitions = 15;
+            return address;
+        }
+
         public async Task<IEnumerable<IOrionDevice>> SearchOnlineDevices(
+            int startAddress,
             Action<IOrionDevice> onDeviceFound, 
             Action<double> progressStatus, 
             CancellationToken token)
@@ -78,52 +130,108 @@ namespace Configastic.SharedModels.Models.BolidDevices
                 throw new ArgumentNullException("port is null!");
             }
 
-            var progress = 1.0;
-            var progressStep = 0.7874;
+            var startAddr = GetValidAddress(startAddress);
 
-            progressStatus(Convert.ToInt32(progress));
-            var result = new Dictionary<byte, string>();
-            var devices = new List<IOrionDevice>();
+            _progress = 1.0;
+            _progressStep = 100.0 / (defaultAddress - startAddr);
+
+            progressStatus(Convert.ToInt32(_progress));
+
+            OnlineDevices.Clear();
             Port.MaxRepetitions = 3;
-            
-            for (byte i = 0; i < 127; i++)
+
+            // First of all, we need to check address 127 (default bolid address)
+            await CheckDeviceWithProgress(onDeviceFound, progressStatus, (byte)defaultAddress);
+
+            for (byte i = startAddr; i < defaultAddress; i++)
             {
                 if (token.IsCancellationRequested)
                 {
                     break;
                 }
-                byte devAddr = (byte)((i == 0) ? 127 : i); // Start searching from 127 (default bolid address
 
-                byte deviceCode;
-                try
-                {
-                    deviceCode = await GetModelCodeAsync(devAddr);
-                }
-                catch (Exception ex)
-                {
-                    progressStatus(Convert.ToInt32(progress));
-                    progress += progressStep;
-                    continue;
-                }
-
-                if (_bolidDict.TryGetValue(deviceCode, out var device))
-                {
-                    var rs485device = _bolidDict[deviceCode]();
-                    rs485device.AddressRS485 = devAddr;
-                    rs485device.Port = Port;
-                    onDeviceFound(rs485device);
-                    devices.Add(rs485device);
-                }
-                progressStatus(Convert.ToInt32(progress));
-                progress += progressStep;
+                await CheckDeviceWithProgress(onDeviceFound, progressStatus, i);
             }
             Port.MaxRepetitions = 15;
-            return devices;
+            return OnlineDevices;
+        }
+
+        private async Task<byte> CheckDevice(Action<IOrionDevice> onDeviceFound, byte currentAddress)
+        {
+            byte deviceCode;
+            try
+            {
+                deviceCode = await GetModelCodeAsync(currentAddress);
+            }
+            catch (Exception ex)
+            {
+                return currentAddress;
+            }
+
+            if (_bolidDict.TryGetValue(deviceCode, out var device))
+            {
+                CreateDevice(onDeviceFound, OnlineDevices, currentAddress, deviceCode);
+            }
+            else
+            {
+                Debug.WriteLine($"Device code: {deviceCode} is unrecognized. (Address: {currentAddress})");
+            }
+            return 0;
         }
 
         public override async Task<bool> SetupAsync(Action<int> updateProgressBar, int modelCode = 0)
         {
             return await base.SetupAsync(updateProgressBar, Code);
+        }
+
+        private async Task CheckDeviceWithProgress(Action<IOrionDevice> onDeviceFound, Action<double> progressStatus, byte devAddr)
+        {
+            byte deviceCode;
+            try
+            {
+                deviceCode = await GetModelCodeAsync(devAddr);
+            }
+            catch (Exception ex)
+            {
+                progressStatus(Convert.ToInt32(_progress));
+                _progress += _progressStep;
+                return;
+            }
+
+            if (_bolidDict.TryGetValue(deviceCode, out var device))
+            {
+                CreateDevice(onDeviceFound, OnlineDevices, devAddr, deviceCode);
+            }
+            else
+            {
+                Debug.WriteLine($"Device code: {deviceCode} is unrecognized. (Address: {devAddr})");
+            }
+            progressStatus(Convert.ToInt32(_progress));
+            _progress += _progressStep;
+        }
+
+        private void CreateDevice(Action<IOrionDevice> onDeviceFound, List<IOrionDevice> devices, byte devAddr, byte deviceCode)
+        {
+            var rs485device = _bolidDict[deviceCode]();
+            rs485device.AddressRS485 = devAddr;
+            rs485device.Port = Port;
+            rs485device.Id = _id;
+            onDeviceFound(rs485device);
+            devices.Add(rs485device);
+            _id++;
+        }
+
+        private static byte GetValidAddress(int startAddress)
+        {
+            if (startAddress < 0)
+            {
+                return 0;
+            }
+            if (startAddress > defaultAddress)
+            {
+                return (byte)defaultAddress;
+            }
+            return (byte)startAddress;
         }
     }
 }

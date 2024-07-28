@@ -9,7 +9,7 @@ namespace Configastic.SharedModels.Models.BolidDevices
     {
         private readonly int inputsCount = 2;
 
-        private const int Code = 16;
+        public const int Code = 16;
 
         #region Properties
 

@@ -1,6 +1,7 @@
 ﻿@page "/scanner"
 
 @using Configastic.Services.Interfaces
+@using Configastic.SharedModels.Interfaces
 @using Configastic.SharedModels.Models.Ports
 @using Fluxor.Blazor.Web.Components
 @using Configastic.Components.Features.Scanner.Store
@@ -9,8 +10,9 @@
 @inherits FluxorComponent
 
 @inject IState<ScanningState> ScanningState
-@inject IDispatcher Dispatcher
+@inject Fluxor.IDispatcher Dispatcher
 @inject IDeviceSearcher DeviceSearcher
+@inject MudBlazor.IDialogService DialogService
 
 <MudContainer 
     MaxWidth="MaxWidth.ExtraLarge" 
@@ -33,11 +35,12 @@
         {
             <MudSlider 
                 @bind-Value="_searchRange" 
-                Min="0" 
-                Max="100" 
+                Min="1" 
+                Max="126" 
                 Step="1" 
-                TickMarks="true" 
-                TickMarkLabels="@_rangeLabels" 
+                TickMarks="true"
+                ValueLabel="true"
+                
                 Class="mb-4" />
         }
         
@@ -76,19 +79,29 @@
                     <MudGrid>
                         <MudItem xs="8">
                             <MudText>@device.Model</MudText>
+                            <MudText>@device.AddressRS485</MudText>
                         </MudItem>
                         <MudItem 
                             xs="4" 
                             Class="d-flex justify-end">
-                            <MudButton 
-                                Variant="Variant.Outlined" 
-                                Size="Size.Small" 
-                                Class="mr-2">Info
-                            </MudButton>
-                            <MudButton 
-                                Variant="Variant.Outlined" 
-                                Size="Size.Small">Connect
-                            </MudButton>
+                            <MudIconButton  
+                                Icon="@Icons.Material.Filled.ZoomOutMap" 
+                                Color="Color.Primary"
+                                aria-label="features"
+                                OnClick="OnDeviceFeaturesClicked">
+                            </MudIconButton>
+                            <MudIconButton  
+                                Icon="@Icons.Material.Filled.ArrowCircleDown" 
+                                Color="Color.Primary"
+                                aria-label="delete"
+                                OnClick="OnDeviceSetFirstFreeAddressClicked">
+                            </MudIconButton>
+                            <MudIconButton  
+                                Icon="@Icons.Material.Filled.Check" 
+                                Color="Color.Primary"
+                                aria-label="delete"
+                                OnClick="() => OpenChangeAddressDialogAsync(device)">
+                            </MudIconButton>
                         </MudItem>
                     </MudGrid>
                 </MudListItem>
@@ -99,8 +112,9 @@
 
 @code {
     private bool _isAdvancedMode = false;
-    private double _searchRange = 50;
-    private string[] _rangeLabels = new[] { "0", "25", "50", "75", "100" };
+    private bool _startSliderVisibility = true;
+    private int _searchRange = 1;
+    private string[] _rangeLabels = new[] { "1", "126" };
     private CancellationTokenSource _cts;
 
     private async Task OnScanningToggled(bool value)
@@ -117,22 +131,59 @@
         }
     }
 
+    private async Task OnDeviceFeaturesClicked()
+    {
+        await OnScanningToggled(false);
+
+        // Wait for any ongoing scanning to stop
+        await Task.Delay(100);
+    }
+
+    private async Task OnDeviceSetFirstFreeAddressClicked()
+    {
+        await OnScanningToggled(false);
+
+        // Wait for any ongoing scanning to stop
+        await Task.Delay(100);
+    }
+
+    private async Task OnDeviceSetNewAddressClicked(IOrionDevice device)
+    {
+        await OnScanningToggled(false);
+
+        // Wait for any ongoing scanning to stop
+        await Task.Delay(100);
+
+
+    }
+
     private async Task StartScanning()
     {
         _cts = new CancellationTokenSource();
 
         try
         {
-            var localUdp = 40000;
-            var remoteUdp = 40000;
-            
-            await DeviceSearcher.SearchDevicesAsync(
+            var localUdp = GetClientUdpPort();
+            var remoteUdp = GetServerUdpPort();
+            if (_isAdvancedMode)
+            {
+                await DeviceSearcher.SearchDevicesAsync(
+                    localUdp,
+                    remoteUdp,
+                    _searchRange,
+                    device => Dispatcher.Dispatch(new AddFoundDeviceAction(device)),
+                    progress => Dispatcher.Dispatch(new UpdateProgressAction(progress)),
+                    _cts.Token);
+
+                return;
+            }
+            await DeviceSearcher.ChangeDefaultAddressToFirstFree(
                 localUdp,
                 remoteUdp,
                 device => Dispatcher.Dispatch(new AddFoundDeviceAction(device)),
-                progress => Dispatcher.Dispatch(new UpdateProgressAction(progress)),
-                _cts.Token
-            );
+                () => Dispatcher.Dispatch(new ClearFoundDeviceAction()),
+                _cts.Token);
+
         }
         catch (OperationCanceledException)
         {
@@ -143,4 +194,29 @@
             Dispatcher.Dispatch(new StopScanningAction());
         }
     }
+
+    private async Task OpenChangeAddressDialogAsync(IOrionDevice device)
+    {
+        await OnScanningToggled(false);
+        var parameters = new DialogParameters
+        {
+            { nameof(ChangeAddressDialog.DeviceName), device.Model },
+            { nameof(ChangeAddressDialog.CurrentDeviceAddress), (int)device.AddressRS485 }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+
+        var dialog = DialogService.Show<ChangeAddressDialog>("Change Address", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled && result.Data != null)
+        {
+            var newAddress = (int)result.Data;
+            await device.ChangeDeviceAddressAsync((byte)newAddress);
+            Dispatcher.Dispatch(new UpdateFoundDeviceAction(device));
+        }
+    }
+
+    private static int GetClientUdpPort() => Preferences.Default.Get("C2000ethernetLocalPort", 40000);
+    private static int GetServerUdpPort() => Preferences.Default.Get("C2000ethernetLocalPort", 40000);
 }
