@@ -5,6 +5,7 @@ namespace Configastic.Services.Interfaces
     public interface IDeviceSearcher
     {
         Task SearchDevicesAsync(
+            string ip,
             int localUdpPort,
             int remoteUdpPort,
             int startAddress,
@@ -13,6 +14,7 @@ namespace Configastic.Services.Interfaces
             CancellationToken cancellationToken);
 
         Task ChangeDefaultAddressToFirstFree(
+            string ip,
             int localUdpPort,
             int remoteUdpPort,
             Action<IOrionDevice> onDeviceFound,

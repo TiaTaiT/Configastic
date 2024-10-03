@@ -6,7 +6,7 @@ using System.Net.Sockets;
 
 namespace Configastic.SharedModels.Models.Ports
 {
-    public class BolidUdpClient : IPort
+    public class BolidUdpClient(IPAddress ip, int remoteUdpPort, int clientUdpPort) : IPort
     {
         private const int ACTUAL_PACKET_LENGTH_INDEX = 1;
         private readonly UdpClient _udpClient;
@@ -16,18 +16,13 @@ namespace Configastic.SharedModels.Models.Ports
 
         public int ReceiveTimeout { get; set; } = 100;
 
-        public IPAddress RemoteServerIp { get; set; } = new IPAddress([192, 168, 127, 254]);
+        public IPAddress RemoteServerIp { get; set; } = ip;
 
-        public int RemoteServerUdpPort { get; set; }
+        public int RemoteServerUdpPort { get; set; } = remoteUdpPort;
 
-        public int ClientUdpPort { get; set; }
+        public int ClientUdpPort { get; set; } = clientUdpPort;
 
         public int Timeout { get; set; } = 100;
-
-        public BolidUdpClient(int clientUdpPort)
-        {
-            ClientUdpPort = clientUdpPort;
-        }
 
         public async Task<byte[]> SendAsync(byte[] packet)
         {

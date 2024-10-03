@@ -14,93 +14,79 @@
 @inject IDeviceSearcher DeviceSearcher
 @inject MudBlazor.IDialogService DialogService
 
-<MudContainer 
-    MaxWidth="MaxWidth.ExtraLarge" 
-    Class="pa-0">
-    <MudPaper 
-        Elevation="3" 
-        Class="pa-4 mb-4" 
-        Style="position: sticky; top: 0; z-index: 1;">
-        <MudText 
-            Typo="Typo.h5" 
-            Class="mb-4">Device Scanning
+<MudContainer MaxWidth="MaxWidth.ExtraLarge"
+              Class="pa-0">
+    <MudPaper Elevation="3"
+              Class="pa-4 mb-4"
+              Style="position: sticky; top: 0; z-index: 1;">
+        <MudText Typo="Typo.h5"
+                 Class="mb-4">
+            Device Scanning
         </MudText>
-        
-        <MudProgressLinear 
-            Color="Color.Primary" 
-            Value="@ScanningState.Value.Progress" 
-            Class="my-4" />
-        
+
+        <MudProgressLinear Color="Color.Primary"
+                           Value="@ScanningState.Value.Progress"
+                           Class="my-4" />
+
         @if (_isAdvancedMode)
         {
-            <MudSlider 
-                @bind-Value="_searchRange" 
-                Min="1" 
-                Max="126" 
-                Step="1" 
-                TickMarks="true"
-                ValueLabel="true"
-                
-                Class="mb-4" />
+            <MudSlider @bind-Value="_searchRange"
+                       Min="1"
+                       Max="126"
+                       Step="1"
+                       TickMarks="true"
+                       ValueLabel="true"
+                       Class="mb-4" />
         }
-        
+
         <MudGrid>
             <MudItem xs="6">
-                <MudSwitch 
-                    @bind-Value="@_isAdvancedMode" 
-                    Color="Color.Primary" 
-                    Label="Advanced Mode" 
-                    T="bool" />
+                <MudSwitch @bind-Value="@_isAdvancedMode"
+                           Color="Color.Primary"
+                           Label="Advanced Mode"
+                           T="bool" />
             </MudItem>
             <MudItem xs="6" Class="d-flex justify-end align-center">
-                <MudText 
-                    Class="mr-2">@(ScanningState.Value.IsScanning ? "Scanning" : "Scan")
+                <MudText Class="mr-2">
+                    @(ScanningState.Value.IsScanning ? "Scanning" : "Scan")
                 </MudText>
-                <MudSwitch 
-                    Value="@ScanningState.Value.IsScanning" 
-                    Color="Color.Primary" 
-                    T="bool" 
-                    ValueChanged="OnScanningToggled" />
+                <MudSwitch Value="@ScanningState.Value.IsScanning"
+                           Color="Color.Primary"
+                           T="bool"
+                           ValueChanged="OnScanningToggled" />
             </MudItem>
         </MudGrid>
     </MudPaper>
 
-    <MudPaper 
-        Class="pa-4" 
-        Style="height: calc(100vh - 290px); overflow-y: auto;">
-        <MudList 
-            Clickable="true" 
-            Dense="true" 
-            T="object">
+    <MudPaper Class="pa-4"
+              Style="height: calc(100vh - 290px); overflow-y: auto;">
+        <MudList Clickable="true"
+                 Dense="true"
+                 T="object">
             @foreach (var device in ScanningState.Value.FoundDevices)
             {
-                <MudListItem 
-                    T="string">
+                <MudListItem T="string">
                     <MudGrid>
                         <MudItem xs="8">
                             <MudText>@device.Model</MudText>
                             <MudText>@device.AddressRS485</MudText>
                         </MudItem>
-                        <MudItem 
-                            xs="4" 
-                            Class="d-flex justify-end">
-                            <MudIconButton  
-                                Icon="@Icons.Material.Filled.ZoomOutMap" 
-                                Color="Color.Primary"
-                                aria-label="features"
-                                OnClick="OnDeviceFeaturesClicked">
+                        <MudItem xs="4"
+                                 Class="d-flex justify-end">
+                            <MudIconButton Icon="@Icons.Material.Filled.ZoomOutMap"
+                                           Color="Color.Primary"
+                                           aria-label="features"
+                                           OnClick="OnDeviceFeaturesClicked">
                             </MudIconButton>
-                            <MudIconButton  
-                                Icon="@Icons.Material.Filled.ArrowCircleDown" 
-                                Color="Color.Primary"
-                                aria-label="delete"
-                                OnClick="OnDeviceSetFirstFreeAddressClicked">
+                            <MudIconButton Icon="@Icons.Material.Filled.ArrowCircleDown"
+                                           Color="Color.Primary"
+                                           aria-label="delete"
+                                           OnClick="OnDeviceSetFirstFreeAddressClicked">
                             </MudIconButton>
-                            <MudIconButton  
-                                Icon="@Icons.Material.Filled.Check" 
-                                Color="Color.Primary"
-                                aria-label="delete"
-                                OnClick="() => OpenChangeAddressDialogAsync(device)">
+                            <MudIconButton Icon="@Icons.Material.Filled.Check"
+                                           Color="Color.Primary"
+                                           aria-label="delete"
+                                           OnClick="() => OpenChangeAddressDialogAsync(device)">
                             </MudIconButton>
                         </MudItem>
                     </MudGrid>
@@ -163,11 +149,13 @@
 
         try
         {
+            var ip = GetServerIp();
             var localUdp = GetClientUdpPort();
             var remoteUdp = GetServerUdpPort();
             if (_isAdvancedMode)
             {
                 await DeviceSearcher.SearchDevicesAsync(
+                    ip,
                     localUdp,
                     remoteUdp,
                     _searchRange,
@@ -178,6 +166,7 @@
                 return;
             }
             await DeviceSearcher.ChangeDefaultAddressToFirstFree(
+                ip,
                 localUdp,
                 remoteUdp,
                 device => Dispatcher.Dispatch(new AddFoundDeviceAction(device)),
@@ -217,6 +206,10 @@
         }
     }
 
-    private static int GetClientUdpPort() => Preferences.Default.Get("C2000ethernetLocalPort", 40000);
-    private static int GetServerUdpPort() => Preferences.Default.Get("C2000ethernetLocalPort", 40000);
+    private static int GetClientUdpPort() => Preferences.Default.Get("C2000wifiLocalPort", 8100);
+    private static int GetServerUdpPort() => Preferences.Default.Get("C2000wifiRemotePort", 12000);
+    private static string GetServerIp() => Preferences.Default.Get("C2000wifiIpAddress", "10.10.10.1");
+
+    //private static int GetClientUdpPort() => Preferences.Default.Get("C2000ethernetLocalPort", 40000);
+    //private static int GetServerUdpPort() => Preferences.Default.Get("C2000ethernetLocalPort", 40000);
 }

@@ -2,6 +2,7 @@
 using Configastic.SharedModels.Interfaces;
 using Configastic.SharedModels.Models.BolidDevices;
 using Configastic.SharedModels.Models.Ports;
+using System.Net;
 
 namespace Configastic.Services.Services
 {
@@ -10,13 +11,14 @@ namespace Configastic.Services.Services
         private readonly Fluxor.IDispatcher _dispatcher = dispatcher;
 
         public async Task ChangeDefaultAddressToFirstFree(
-            int localUdpPort, 
+            string ip,
+            int localUdpPort,
             int remoteUdpPort,
             Action<IOrionDevice> onDeviceFound,
             Action cleanDeviceFound,
             CancellationToken cancellationToken)
         {
-            var c2000M = GetOrionManager(localUdpPort, remoteUdpPort);
+            var c2000M = GetOrionManager(ip, localUdpPort, remoteUdpPort);
             c2000M.Port.MaxRepetitions = 1;
             var startAddress = 1;
             while (!cancellationToken.IsCancellationRequested)
@@ -25,7 +27,7 @@ namespace Configastic.Services.Services
                 try
                 {
                     newDevice = await c2000M.GetNewOnlineDevice(127);
-                    
+
                 }
                 catch (Exception ex)
                 {
@@ -43,10 +45,11 @@ namespace Configastic.Services.Services
                     onDeviceFound(newDevice);
                 }
             }
-            
+
         }
 
         public async Task SearchDevicesAsync(
+            string ip,
             int localUdpPort,
             int remoteUdpPort,
             int startAddress,
@@ -54,13 +57,13 @@ namespace Configastic.Services.Services
             Action<double> onProgressUpdate,
             CancellationToken cancellationToken)
         {
-            var c2000M = GetOrionManager(localUdpPort, remoteUdpPort);
+            var c2000M = GetOrionManager(ip, localUdpPort, remoteUdpPort);
             var t = await c2000M.SearchOnlineDevices(startAddress, onDeviceFound, onProgressUpdate, cancellationToken);
         }
 
-        private static C2000M GetOrionManager(int localUdpPort, int remoteUdpPort)
+        private static C2000M GetOrionManager(string ip, int localUdpPort, int remoteUdpPort)
         {
-            var port = new BolidUdpClient(localUdpPort)
+            var port = new BolidUdpClient(IPAddress.Parse(ip), remoteUdpPort, localUdpPort)
             {
                 RemoteServerUdpPort = remoteUdpPort,
             };
