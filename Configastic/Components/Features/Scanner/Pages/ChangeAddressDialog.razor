@@ -26,25 +26,21 @@
 
 @code {
     [CascadingParameter]
-    MudDialogInstance MudDialog
-    {
-        get;
-        set;
-    }
+    MudDialogInstance? MudDialog { get; set; }
 
-    [Parameter] public string DeviceName { get; set; }
+    [Parameter] public string DeviceName { get; set; } = string.Empty;
     [Parameter] public int CurrentDeviceAddress { get; set; }
 
     private int NewAddress { get; set; } = 127;
 
     private void Submit()
     {
-        MudDialog.Close(DialogResult.Ok(NewAddress));
+        MudDialog?.Close(DialogResult.Ok(NewAddress));
     }
 
     private void Cancel()
     {
-        MudDialog.Close(DialogResult.Cancel());
+        MudDialog?.Close(DialogResult.Cancel());
     }
 }
 

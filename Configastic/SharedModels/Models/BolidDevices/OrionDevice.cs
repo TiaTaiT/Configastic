@@ -54,7 +54,11 @@ namespace Configastic.SharedModels.Models.BolidDevices
             if (result == null || result?.Length <= ResponseNewAddressOffset)
                 return false;
 
-            return result[ResponseNewAddressOffset] == (byte)AddressRS485;
+            byte? success = result?[ResponseNewAddressOffset];
+            if (success == null)
+                return false;
+
+            return success == (byte)AddressRS485;
         }
 
         public async Task RebootAsync()

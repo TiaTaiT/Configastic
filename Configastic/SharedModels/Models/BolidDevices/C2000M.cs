@@ -163,7 +163,7 @@ namespace Configastic.SharedModels.Models.BolidDevices
             {
                 deviceCode = await GetModelCodeAsync(currentAddress);
             }
-            catch (Exception ex)
+            catch
             {
                 return currentAddress;
             }
@@ -191,7 +191,7 @@ namespace Configastic.SharedModels.Models.BolidDevices
             {
                 deviceCode = await GetModelCodeAsync(devAddr);
             }
-            catch (Exception ex)
+            catch
             {
                 progressStatus(Convert.ToInt32(_progress));
                 _progress += _progressStep;

@@ -4,7 +4,7 @@ namespace Configastic.SharedModels.Models.BolidDevices
 {
     public class C2000_Kdl2i : C2000_Kdl
     {
-        public const int Code = 41;
+        public new const int Code = 41;
         public C2000_Kdl2i(IPort port) : base(port)
         {
             ModelCode = Code;

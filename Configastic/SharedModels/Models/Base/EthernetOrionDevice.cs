@@ -12,9 +12,9 @@ namespace Configastic.SharedModels.Interfaces
         /// <summary>
         /// IP адрес прибора ("192.168.2.12")
         /// </summary>
-        public string AddressIP { get; set; }
+        public string AddressIP { get; set; } = string.Empty;
 
-        public string Netmask { get; set; }
+        public string Netmask { get; set; } = string.Empty;
 
         public int CIDR
         {
@@ -25,8 +25,8 @@ namespace Configastic.SharedModels.Interfaces
         /// <summary>
         /// MAC-адрес прибора
         /// </summary>
-        public string MACaddress { get; set; }
+        public string MACaddress { get; set; } = string.Empty;
 
-        public string DefaultGateway { get; set; }
+        public string DefaultGateway { get; set; } = string.Empty;
     }
 }

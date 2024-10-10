@@ -98,10 +98,10 @@
 
 @code {
     private bool _isAdvancedMode = false;
-    private bool _startSliderVisibility = true;
+    //private bool _startSliderVisibility = true;
     private int _searchRange = 1;
     private string[] _rangeLabels = new[] { "1", "126" };
-    private CancellationTokenSource _cts;
+    private CancellationTokenSource _cts = new CancellationTokenSource();
 
     private async Task OnScanningToggled(bool value)
     {

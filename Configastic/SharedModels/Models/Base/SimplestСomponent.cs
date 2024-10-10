@@ -9,22 +9,22 @@ namespace Configastic.SharedModels.Models.Base
         /// <summary>
         /// Модель компонента ("С2000-СП1 исп.01 АЦДР.425412.001-01")
         /// </summary>
-        public string Model { get; set; }
+        public string Model { get; set; } = string.Empty;
 
         /// <summary>
         /// Тип прибора ("Блок сигнально-пусковой")
         /// </summary>
-        public string DeviceType { get; set; }
+        public string DeviceType { get; set; } = string.Empty;
 
         /// <summary>
         /// Обозначение компонента на схеме ("SR1.3")
         /// </summary>
-        public string Designation { get; set; }
+        public string Designation { get; set; } = string.Empty;
 
         /// <summary>
         /// Обозначение шкафа в котором находится этот дивайс
         /// </summary>
-        public string ParentName { get; set; }
+        public string ParentName { get; set; } = string.Empty;
 
         public bool Equals(SimplestСomponent obj)
         {

@@ -553,7 +553,7 @@ namespace Configastic.SharedModels.Models.BolidDevices
         private static byte[] GetRemoteDeviceIp(string sendStr, ushort addressOffset)
         {
             if (IsNullOrEmpty(sendStr))
-                return null;
+                return [];
 
             var byteArray = Encoding.Default.GetBytes(sendStr);
             var offsetBytes = BitConverter.GetBytes(addressOffset);
@@ -631,7 +631,7 @@ namespace Configastic.SharedModels.Models.BolidDevices
 
             var cmd = CombineArrays(header, bytes);
             CommandSend(cmd);*/
-            return null;
+            return [];
         }
 
         private byte[] GetRemoteDeviceMac(string macString, ushort addressOffset)

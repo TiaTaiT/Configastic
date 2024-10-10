@@ -9,7 +9,7 @@ namespace Configastic.SharedModels.Models.Ports
     public class BolidUdpClient(IPAddress ip, int remoteUdpPort, int clientUdpPort) : IPort
     {
         private const int ACTUAL_PACKET_LENGTH_INDEX = 1;
-        private readonly UdpClient _udpClient;
+        private readonly UdpClient _udpClient = new();
         private byte _commandCounter = 0x01;
 
         public int MaxRepetitions { get; set; } = 15;
@@ -91,7 +91,7 @@ namespace Configastic.SharedModels.Models.Ports
                 catch (OperationCanceledException)
                 {
                     // Timeout occurred
-                    return (false, null, null);
+                    return (false, [], null);
                 }
             }
         }

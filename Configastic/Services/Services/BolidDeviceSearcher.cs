@@ -29,7 +29,7 @@ namespace Configastic.Services.Services
                     newDevice = await c2000M.GetNewOnlineDevice(127);
 
                 }
-                catch (Exception ex)
+                catch
                 {
                     continue;
                 }

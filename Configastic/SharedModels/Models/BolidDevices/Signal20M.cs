@@ -4,7 +4,7 @@ namespace Configastic.SharedModels.Models.BolidDevices
 {
     public class Signal20M : Signal20P
     {
-        public const int Code = 26;
+        public new const int Code = 26;
 
         public Signal20M(IPort port) : base(port)
         {

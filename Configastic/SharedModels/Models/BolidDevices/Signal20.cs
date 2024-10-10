@@ -4,7 +4,7 @@ namespace Configastic.SharedModels.Models.BolidDevices
 {
     public class Signal20 : OrionDevice
     {
-        public new const int Code = 1;
+        public const int Code = 1;
         public Signal20(IPort port) : base(port)
         {
             ModelCode = Code;
