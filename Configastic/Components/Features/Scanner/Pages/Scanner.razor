@@ -21,7 +21,7 @@
               Style="position: sticky; top: 0; z-index: 1;">
         <MudText Typo="Typo.h5"
                  Class="mb-4">
-            Device Scanning
+            @(_isAdvancedMode ? "Devices Scanning" : "Addresses renumbering")
         </MudText>
 
         <MudProgressLinear Color="Color.Primary"
@@ -43,7 +43,7 @@
             <MudItem xs="6">
                 <MudSwitch @bind-Value="@_isAdvancedMode"
                            Color="Color.Primary"
-                           Label="Advanced Mode"
+                           Label="Mode"
                            T="bool" />
             </MudItem>
             <MudItem xs="6" Class="d-flex justify-end align-center">
