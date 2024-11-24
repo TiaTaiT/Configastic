@@ -1,5 +1,4 @@
 ﻿@page "/scanner"
-
 @using Configastic.Services.Interfaces
 @using Configastic.SharedModels.Interfaces
 @using Configastic.SharedModels.Models.Ports
@@ -14,13 +13,11 @@
 @inject IDeviceSearcher DeviceSearcher
 @inject MudBlazor.IDialogService DialogService
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge"
-              Class="pa-0">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-0">
     <MudPaper Elevation="3"
               Class="pa-4 mb-4"
               Style="position: sticky; top: 0; z-index: 1;">
-        <MudText Typo="Typo.h5"
-                 Class="mb-4">
+        <MudText Typo="Typo.h5" Class="mb-4">
             @(_isAdvancedMode ? "Devices Scanning" : "Addresses renumbering")
         </MudText>
 
@@ -65,32 +62,10 @@
                  T="object">
             @foreach (var device in ScanningState.Value.FoundDevices)
             {
-                <MudListItem T="string">
-                    <MudGrid>
-                        <MudItem xs="8">
-                            <MudText>@device.Model</MudText>
-                            <MudText>@device.AddressRS485</MudText>
-                        </MudItem>
-                        <MudItem xs="4"
-                                 Class="d-flex justify-end">
-                            <MudIconButton Icon="@Icons.Material.Filled.ZoomOutMap"
-                                           Color="Color.Primary"
-                                           aria-label="features"
-                                           OnClick="OnDeviceFeaturesClicked">
-                            </MudIconButton>
-                            <MudIconButton Icon="@Icons.Material.Filled.ArrowCircleDown"
-                                           Color="Color.Primary"
-                                           aria-label="delete"
-                                           OnClick="OnDeviceSetFirstFreeAddressClicked">
-                            </MudIconButton>
-                            <MudIconButton Icon="@Icons.Material.Filled.Check"
-                                           Color="Color.Primary"
-                                           aria-label="delete"
-                                           OnClick="() => OpenChangeAddressDialogAsync(device)">
-                            </MudIconButton>
-                        </MudItem>
-                    </MudGrid>
-                </MudListItem>
+                <DeviceListItem Device="device"
+                                OnFeatureClick="OnDeviceFeaturesClicked"
+                                OnSetFirstFreeAddressClick="OnDeviceSetFirstFreeAddressClicked"
+                                OnChangeAddressClick="OpenChangeAddressDialogAsync" />
             }
         </MudList>
     </MudPaper>
@@ -98,9 +73,7 @@
 
 @code {
     private bool _isAdvancedMode = false;
-    //private bool _startSliderVisibility = true;
     private int _searchRange = 1;
-    private string[] _rangeLabels = new[] { "1", "126" };
     private CancellationTokenSource _cts = new CancellationTokenSource();
 
     private async Task OnScanningToggled(bool value)
@@ -120,27 +93,13 @@
     private async Task OnDeviceFeaturesClicked()
     {
         await OnScanningToggled(false);
-
-        // Wait for any ongoing scanning to stop
-        await Task.Delay(100);
+        await Task.Delay(100); // Wait for any ongoing scanning to stop
     }
 
     private async Task OnDeviceSetFirstFreeAddressClicked()
     {
         await OnScanningToggled(false);
-
-        // Wait for any ongoing scanning to stop
-        await Task.Delay(100);
-    }
-
-    private async Task OnDeviceSetNewAddressClicked(IOrionDevice device)
-    {
-        await OnScanningToggled(false);
-
-        // Wait for any ongoing scanning to stop
-        await Task.Delay(100);
-
-
+        await Task.Delay(100); // Wait for any ongoing scanning to stop
     }
 
     private async Task StartScanning()
@@ -152,6 +111,7 @@
             var ip = GetServerIp();
             var localUdp = GetClientUdpPort();
             var remoteUdp = GetServerUdpPort();
+
             if (_isAdvancedMode)
             {
                 await DeviceSearcher.SearchDevicesAsync(
@@ -162,9 +122,9 @@
                     device => Dispatcher.Dispatch(new AddFoundDeviceAction(device)),
                     progress => Dispatcher.Dispatch(new UpdateProgressAction(progress)),
                     _cts.Token);
-
                 return;
             }
+
             await DeviceSearcher.ChangeDefaultAddressToFirstFree(
                 ip,
                 localUdp,
@@ -172,7 +132,6 @@
                 device => Dispatcher.Dispatch(new AddFoundDeviceAction(device)),
                 () => Dispatcher.Dispatch(new ClearFoundDeviceAction()),
                 _cts.Token);
-
         }
         catch (OperationCanceledException)
         {
@@ -194,11 +153,10 @@
         };
 
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
-
         var dialog = DialogService.Show<ChangeAddressDialog>("Change Address", parameters, options);
         var result = await dialog.Result;
 
-        if (result != null && !result.Canceled && result.Data != null)
+        if (result?.Canceled == false && result.Data != null)
         {
             var newAddress = (int)result.Data;
             await device.ChangeDeviceAddressAsync((byte)newAddress);
