@@ -1,0 +1,47 @@
+﻿@using Configastic.SharedModels.Interfaces
+@using MudBlazor
+
+<MudListItem T="string">
+    <MudGrid>
+        <MudItem xs="8">
+            <MudText>@Device.Model</MudText>
+            <MudText>@Device.AddressRS485</MudText>
+        </MudItem>
+        <MudItem xs="4" Class="d-flex justify-end">
+            <MudIconButton Icon="@Icons.Material.Filled.ZoomOutMap"
+                           Color="Color.Primary"
+                           aria-label="features"
+                           OnClick="OnFeatureClick">
+            </MudIconButton>
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowCircleDown"
+                           Color="Color.Primary"
+                           aria-label="set first free address"
+                           OnClick="OnSetFirstFreeAddressClick">
+            </MudIconButton>
+            <MudIconButton Icon="@Icons.Material.Filled.Check"
+                           Color="Color.Primary"
+                           aria-label="change address"
+                           OnClick="HandleChangeAddressClick">
+            </MudIconButton>
+        </MudItem>
+    </MudGrid>
+</MudListItem>
+
+@code {
+    [Parameter, EditorRequired]
+    public IOrionDevice Device { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback OnFeatureClick { get; set; }
+
+    [Parameter]
+    public EventCallback OnSetFirstFreeAddressClick { get; set; }
+
+    [Parameter]
+    public EventCallback<IOrionDevice> OnChangeAddressClick { get; set; }
+
+    private async Task HandleChangeAddressClick()
+    {
+        await OnChangeAddressClick.InvokeAsync(Device);
+    }
+}

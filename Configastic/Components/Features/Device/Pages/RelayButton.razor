@@ -1,0 +1,13 @@
+﻿<MudToggleIconButton @bind-Toggled="RelayOn"
+                     Icon="@Icons.Material.Filled.ArrowCircleUp"
+                     Color="@Color.Error"
+                     ToggledIcon="@Icons.Material.Filled.ArrowDropDownCircle"
+                     ToggledColor="@Color.Success"
+                     title="@(RelayOn ? "On" : "Off")" />
+
+<span>Alarm is @(RelayOn ? "On" : "Off")</span>
+
+@code {
+    public bool RelayOn { get; set; }
+}
+
