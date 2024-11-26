@@ -1,0 +1,79 @@
+﻿@page "/device-features/{DeviceId}"
+@using Configastic.Components.Features.Scanner.Store
+@using Configastic.SharedModels.Interfaces
+@using Microsoft.AspNetCore.Components
+@using Fluxor.Blazor.Web.Components
+@using MudBlazor
+
+@inherits FluxorComponent
+
+@inject IState<ScanningState> ScanningState
+@inject NavigationManager NavigationManager
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="pa-4">
+    <MudPaper Elevation="3" Class="pa-4">
+        <MudGrid>
+            <MudItem xs="12">
+                <MudText Typo="Typo.h5" Class="mb-4">Device Features</MudText>
+            </MudItem>
+            
+            @if (_device != null)
+            {
+                <MudItem xs="12">
+                    <MudCard>
+                        <MudCardContent>
+                            <MudText Typo="Typo.h6">Basic Information</MudText>
+                            <MudList 
+                                Dense="true"
+                                T="object"
+                            >
+                                <MudListItem>
+                                    <MudText><strong>Model:</strong> @_device.Model</MudText>
+                                </MudListItem>
+                                <MudListItem>
+                                    <MudText><strong>Address RS485:</strong> @_device.AddressRS485</MudText>
+                                </MudListItem>
+                                <MudListItem>
+                                    <MudText><strong>ID:</strong> @_device.Id</MudText>
+                                </MudListItem>
+                                <!-- Add more device properties as needed -->
+                            </MudList>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+
+        <MudButton Color="Color.Primary" 
+                   Variant="Variant.Filled" 
+                   OnClick="NavigateBack" 
+                   Class="mt-4">
+            Back to Scanner
+        </MudButton>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [Parameter]
+    public string DeviceId { get; set; }
+
+    private IOrionDevice _device;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();  // Add this line to properly initialize FluxorComponent
+
+        _device = ScanningState.Value.FoundDevices
+            .FirstOrDefault(d => d.Id == int.Parse(DeviceId));
+
+        if (_device == null)
+        {
+            NavigateBack();
+        }
+    }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("/scanner");
+    }
+}

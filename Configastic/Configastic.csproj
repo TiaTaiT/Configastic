@@ -67,7 +67,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Components\Features\Device\Store\" />
       <Folder Include="wwwroot\css\bootstrap\" />
     </ItemGroup>
 

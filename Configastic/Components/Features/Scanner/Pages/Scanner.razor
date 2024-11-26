@@ -15,57 +15,57 @@
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-0">
     <MudPaper Elevation="3"
-              Class="pa-4 mb-4"
-              Style="position: sticky; top: 0; z-index: 1;">
+    Class="pa-4 mb-4"
+    Style="position: sticky; top: 0; z-index: 1;">
         <MudText Typo="Typo.h5" Class="mb-4">
             @(_isAdvancedMode ? "Devices Scanning" : "Addresses renumbering")
         </MudText>
 
         <MudProgressLinear Color="Color.Primary"
-                           Value="@ScanningState.Value.Progress"
-                           Class="my-4" />
+        Value="@ScanningState.Value.Progress"
+        Class="my-4" />
 
         @if (_isAdvancedMode)
         {
             <MudSlider @bind-Value="_searchRange"
-                       Min="1"
-                       Max="126"
-                       Step="1"
-                       TickMarks="true"
-                       ValueLabel="true"
-                       Class="mb-4" />
+            Min="1"
+            Max="126"
+            Step="1"
+            TickMarks="true"
+            ValueLabel="true"
+            Class="mb-4" />
         }
 
         <MudGrid>
             <MudItem xs="6">
                 <MudSwitch @bind-Value="@_isAdvancedMode"
-                           Color="Color.Primary"
-                           Label="Mode"
-                           T="bool" />
+                Color="Color.Primary"
+                Label="Mode"
+                T="bool" />
             </MudItem>
             <MudItem xs="6" Class="d-flex justify-end align-center">
                 <MudText Class="mr-2">
                     @(ScanningState.Value.IsScanning ? "Scanning" : "Scan")
                 </MudText>
                 <MudSwitch Value="@ScanningState.Value.IsScanning"
-                           Color="Color.Primary"
-                           T="bool"
-                           ValueChanged="OnScanningToggled" />
+                Color="Color.Primary"
+                T="bool"
+                ValueChanged="OnScanningToggled" />
             </MudItem>
         </MudGrid>
     </MudPaper>
 
     <MudPaper Class="pa-4"
-              Style="height: calc(100vh - 290px); overflow-y: auto;">
+    Style="height: calc(100vh - 290px); overflow-y: auto;">
         <MudList Clickable="true"
-                 Dense="true"
-                 T="object">
+        Dense="true"
+        T="object">
             @foreach (var device in ScanningState.Value.FoundDevices)
             {
                 <DeviceListItem Device="device"
-                                OnFeatureClick="OnDeviceFeaturesClicked"
-                                OnSetFirstFreeAddressClick="OnDeviceSetFirstFreeAddressClicked"
-                                OnChangeAddressClick="OpenChangeAddressDialogAsync" />
+                    OnScanningToggledOff="ScanningToogledOff"
+                    OnSetFirstFreeAddressClick="OnDeviceSetFirstFreeAddressClicked"
+                    OnChangeAddressClick="OpenChangeAddressDialogAsync" />
             }
         </MudList>
     </MudPaper>
@@ -90,16 +90,20 @@
         }
     }
 
-    private async Task OnDeviceFeaturesClicked()
+    private async Task ScanningToogledOff()
     {
         await OnScanningToggled(false);
         await Task.Delay(100); // Wait for any ongoing scanning to stop
     }
 
+    private async Task OnDeviceFeaturesClicked()
+    {
+        await ScanningToogledOff();
+    }
+
     private async Task OnDeviceSetFirstFreeAddressClicked()
     {
-        await OnScanningToggled(false);
-        await Task.Delay(100); // Wait for any ongoing scanning to stop
+        await ScanningToogledOff();
     }
 
     private async Task StartScanning()
@@ -164,7 +168,11 @@
         }
     }
 
-    private static int GetClientUdpPort() => Preferences.Default.Get("C2000wifiLocalPort", 8100);
-    private static int GetServerUdpPort() => Preferences.Default.Get("C2000wifiRemotePort", 12000);
-    private static string GetServerIp() => Preferences.Default.Get("C2000wifiIpAddress", "10.10.10.1");
+    //private static int GetClientUdpPort() => Preferences.Default.Get("C2000wifiLocalPort", 8100);
+    //private static int GetServerUdpPort() => Preferences.Default.Get("C2000wifiRemotePort", 12000);
+    //private static string GetServerIp() => Preferences.Default.Get("C2000wifiIpAddress", "10.10.10.1");
+    private static string GetServerIp() => Preferences.Default.Get("C2000ethernetIpAddress", "192.168.127.254");
+
+    private static int GetClientUdpPort() => Preferences.Default.Get("C2000ethernetLocalPort", 40001);
+    private static int GetServerUdpPort() => Preferences.Default.Get("C2000ethernetLocalPort", 40001);
 }

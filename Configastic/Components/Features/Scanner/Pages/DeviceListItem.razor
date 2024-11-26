@@ -1,6 +1,8 @@
 ﻿@using Configastic.SharedModels.Interfaces
 @using MudBlazor
 
+@inject NavigationManager NavigationManager
+
 <MudListItem T="string">
     <MudGrid>
         <MudItem xs="8">
@@ -9,19 +11,19 @@
         </MudItem>
         <MudItem xs="4" Class="d-flex justify-end">
             <MudIconButton Icon="@Icons.Material.Filled.ZoomOutMap"
-                           Color="Color.Primary"
-                           aria-label="features"
-                           OnClick="OnFeatureClick">
+            Color="Color.Primary"
+            aria-label="features"
+            OnClick="NavigateToFeatures">
             </MudIconButton>
             <MudIconButton Icon="@Icons.Material.Filled.ArrowCircleDown"
-                           Color="Color.Primary"
-                           aria-label="set first free address"
-                           OnClick="OnSetFirstFreeAddressClick">
+            Color="Color.Primary"
+            aria-label="set first free address"
+            OnClick="OnSetFirstFreeAddressClick">
             </MudIconButton>
             <MudIconButton Icon="@Icons.Material.Filled.Check"
-                           Color="Color.Primary"
-                           aria-label="change address"
-                           OnClick="HandleChangeAddressClick">
+            Color="Color.Primary"
+            aria-label="change address"
+            OnClick="HandleChangeAddressClick">
             </MudIconButton>
         </MudItem>
     </MudGrid>
@@ -32,13 +34,19 @@
     public IOrionDevice Device { get; set; } = default!;
 
     [Parameter]
-    public EventCallback OnFeatureClick { get; set; }
-
-    [Parameter]
     public EventCallback OnSetFirstFreeAddressClick { get; set; }
 
     [Parameter]
     public EventCallback<IOrionDevice> OnChangeAddressClick { get; set; }
+
+    [Parameter]
+    public EventCallback OnScanningToggledOff { get; set; }
+
+    private async Task NavigateToFeatures()
+    {
+        await OnScanningToggledOff.InvokeAsync();
+        NavigationManager.NavigateTo($"/device-features/{Device.Id}");
+    }
 
     private async Task HandleChangeAddressClick()
     {
