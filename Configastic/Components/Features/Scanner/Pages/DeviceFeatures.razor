@@ -1,4 +1,5 @@
 ﻿@page "/device-features/{DeviceId}"
+@using Configastic.Components.Features.Scanner.Pages.ViewModels
 @using Configastic.Components.Features.Scanner.Store
 @using Configastic.SharedModels.Interfaces
 @using Microsoft.AspNetCore.Components
@@ -16,7 +17,7 @@
             <MudItem xs="12">
                 <MudText Typo="Typo.h5" Class="mb-4">Device Features</MudText>
             </MudItem>
-            
+
             @if (_device != null)
             {
                 <MudItem xs="12">
@@ -24,8 +25,8 @@
                         <MudCardContent>
                             <MudText Typo="Typo.h6">Basic Information</MudText>
                             <MudList 
-                                Dense="true"
-                                T="object"
+                            Dense="true"
+                            T="object"
                             >
                                 <MudListItem>
                                     <MudText><strong>Model:</strong> @_device.Model</MudText>
@@ -33,10 +34,7 @@
                                 <MudListItem>
                                     <MudText><strong>Address RS485:</strong> @_device.AddressRS485</MudText>
                                 </MudListItem>
-                                <MudListItem>
-                                    <MudText><strong>ID:</strong> @_device.Id</MudText>
-                                </MudListItem>
-                                <!-- Add more device properties as needed -->
+                                <RelayItemsList RelaysViewModels="_relayViewModels" />
                             </MudList>
                         </MudCardContent>
                     </MudCard>
@@ -45,9 +43,9 @@
         </MudGrid>
 
         <MudButton Color="Color.Primary" 
-                   Variant="Variant.Filled" 
-                   OnClick="NavigateBack" 
-                   Class="mt-4">
+        Variant="Variant.Filled" 
+        OnClick="NavigateBack" 
+        Class="mt-4">
             Back to Scanner
         </MudButton>
     </MudPaper>
@@ -58,6 +56,7 @@
     public string DeviceId { get; set; }
 
     private IOrionDevice _device;
+    private List<RelayViewModel> _relayViewModels = [];
 
     protected override void OnInitialized()
     {
@@ -69,6 +68,15 @@
         if (_device == null)
         {
             NavigateBack();
+        }
+
+        if(_device is IRelays)
+        {
+            foreach (var relay in ((IRelays)_device).Relays)
+            {
+                var relayVM = new RelayViewModel(relay);
+                _relayViewModels.Add(relayVM);
+            }
         }
     }
 
