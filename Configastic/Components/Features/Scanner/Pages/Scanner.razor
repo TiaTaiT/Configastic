@@ -18,14 +18,14 @@
     Class="pa-4 mb-4"
     Style="position: sticky; top: 0; z-index: 1;">
         <MudText Typo="Typo.h5" Class="mb-4">
-            @(_isAdvancedMode ? "Devices Scanning" : "Addresses renumbering")
+            @(@ScanningState.Value.ScannerMode ? "Devices Scanning" : "Addresses renumbering")
         </MudText>
 
         <MudProgressLinear Color="Color.Primary"
         Value="@ScanningState.Value.Progress"
         Class="my-4" />
 
-        @if (_isAdvancedMode)
+        @if (@ScanningState.Value.ScannerMode)
         {
             <MudSlider @bind-Value="_searchRange"
             Min="1"
@@ -38,19 +38,22 @@
 
         <MudGrid>
             <MudItem xs="6">
-                <MudSwitch @bind-Value="@_isAdvancedMode"
-                Color="Color.Primary"
-                Label="Mode"
-                T="bool" />
+                <MudSwitch 
+                    Value="@ScanningState.Value.ScannerMode"
+                    ValueChanged="OnModeToggled"
+                    Color="Color.Primary"
+                    Label="Mode"
+                    T="bool" />
             </MudItem>
             <MudItem xs="6" Class="d-flex justify-end align-center">
                 <MudText Class="mr-2">
                     @(ScanningState.Value.IsScanning ? "Scanning" : "Scan")
                 </MudText>
-                <MudSwitch Value="@ScanningState.Value.IsScanning"
-                Color="Color.Primary"
-                T="bool"
-                ValueChanged="OnScanningToggled" />
+                <MudSwitch 
+                    Value="@ScanningState.Value.IsScanning"
+                    Color="Color.Primary"
+                    T="bool"
+                    ValueChanged="OnScanningToggled" />
             </MudItem>
         </MudGrid>
     </MudPaper>
@@ -63,9 +66,9 @@
             @foreach (var device in ScanningState.Value.FoundDevices)
             {
                 <DeviceListItem Device="device"
-                    OnScanningToggledOff="ScanningToogledOff"
-                    OnSetFirstFreeAddressClick="OnDeviceSetFirstFreeAddressClicked"
-                    OnChangeAddressClick="OpenChangeAddressDialogAsync" />
+                OnScanningToggledOff="ScanningToogledOff"
+                OnSetFirstFreeAddressClick="OnDeviceSetFirstFreeAddressClicked"
+                OnChangeAddressClick="OpenChangeAddressDialogAsync" />
             }
         </MudList>
     </MudPaper>
@@ -75,6 +78,18 @@
     private bool _isAdvancedMode = false;
     private int _searchRange = 1;
     private CancellationTokenSource _cts = new CancellationTokenSource();
+
+    private async Task OnModeToggled(bool value)
+    {
+        if(value)
+        {
+            Dispatcher.Dispatch(new SetSearchingModeAction());
+        }
+        else
+        {
+            Dispatcher.Dispatch(new SetRenumberingModeAction());
+        }
+    }
 
     private async Task OnScanningToggled(bool value)
     {
@@ -116,7 +131,7 @@
             var localUdp = GetClientUdpPort();
             var remoteUdp = GetServerUdpPort();
 
-            if (_isAdvancedMode)
+            if (ScanningState.Value.ScannerMode)
             {
                 await DeviceSearcher.SearchDevicesAsync(
                     ip,

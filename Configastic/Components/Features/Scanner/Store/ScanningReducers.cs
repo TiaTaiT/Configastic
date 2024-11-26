@@ -33,5 +33,13 @@
 
             return state with { FoundDevices = updatedDevices };
         }
+
+        [ReducerMethod]
+        public static ScanningState ReduceSetRenumberingModeAction(ScanningState state, SetRenumberingModeAction action) =>
+            state with { ScannerMode = false };
+
+        [ReducerMethod]
+        public static ScanningState ReduceSetSearchingModeAction(ScanningState state, SetSearchingModeAction action) =>
+            state with { ScannerMode = true };
     }
 }

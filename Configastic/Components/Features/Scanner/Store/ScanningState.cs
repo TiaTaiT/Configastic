@@ -9,6 +9,7 @@ namespace Configastic.Components.Features.Scanner.Store
         public bool IsScanning { get; init; }
         public double Progress { get; init; }
         public ImmutableArray<IOrionDevice> FoundDevices { get; init; } = [];
+        public bool ScannerMode {  get; init; }
     }
 
     public class ScanningFeature : Feature<ScanningState>
@@ -20,6 +21,7 @@ namespace Configastic.Components.Features.Scanner.Store
             IsScanning = false,
             Progress = 0,
             FoundDevices = [],
+            ScannerMode = false,
         };
     }
 
@@ -29,4 +31,6 @@ namespace Configastic.Components.Features.Scanner.Store
     public record AddFoundDeviceAction(IOrionDevice Device);
     public record UpdateFoundDeviceAction(IOrionDevice UpdatedDevice);
     public record ClearFoundDeviceAction();
+    public record SetRenumberingModeAction();
+    public record SetSearchingModeAction();
 }
