@@ -59,17 +59,17 @@
     </MudPaper>
 
     <MudPaper Class="pa-4"
-    Style="height: calc(100vh - 290px); overflow-y: auto;">
+              Style="height: calc(100vh - 290px); overflow-y: auto;">
         <MudList Clickable="true"
-            Dense="true"
-            T="object">
-                @foreach (var device in ScanningState.Value.FoundDevices)
-                {
-                    <DeviceListItem Device="device"
-                    OnScanningToggledOff="ScanningToogledOff"
-                    OnSetFirstFreeAddressClick="OnDeviceSetFirstFreeAddressClicked"
-                    OnChangeAddressClick="OpenChangeAddressDialogAsync" />
-                }
+                 Dense="true"
+                 T="object">
+            @foreach (var device in ScanningState.Value.FoundDevices)
+            {
+                <DeviceListItem Device="device"
+                OnScanningToggledOff="ScanningToogledOff"
+                OnSetFirstFreeAddressClick="OnDeviceSetFirstFreeAddressClicked"
+                OnChangeAddressClick="OpenChangeAddressDialogAsync" />
+            }
         </MudList>
     </MudPaper>
 </MudContainer>

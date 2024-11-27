@@ -4,7 +4,6 @@
 @using Configastic.SharedModels.Interfaces
 @using Microsoft.AspNetCore.Components
 @using Fluxor.Blazor.Web.Components
-@using MudBlazor
 
 @inherits FluxorComponent
 
@@ -15,7 +14,7 @@
     <MudPaper Elevation="3" Class="pa-4">
         <MudGrid>
             <MudItem xs="12">
-                <MudText Typo="Typo.h5" Class="mb-4">Device Features</MudText>
+                <MudText Typo="Typo.h6" Class="mb-4">Device Features</MudText>
             </MudItem>
 
             @if (_device != null)
@@ -23,7 +22,7 @@
                 <MudItem xs="12">
                     <MudCard>
                         <MudCardContent>
-                            <MudText Typo="Typo.h6">Basic Information</MudText>
+                            
                             <MudList 
                             Dense="true"
                             T="object"
@@ -34,8 +33,26 @@
                                 <MudListItem>
                                     <MudText><strong>Address RS485:</strong> @_device.AddressRS485</MudText>
                                 </MudListItem>
-                                <RelayItemsList RelaysViewModels="_relayViewModels" />
+
+                                
                             </MudList>
+                        </MudCardContent>
+                    </MudCard>
+                    
+                </MudItem>
+                <MudItem xs="12" >
+                    <MudCard>
+                        <MudCardContent>
+                            <MudText><strong>Relays:</strong></MudText>
+                            <RelayItemsList RelaysViewModels="_relayViewModels" />
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudCard>
+                        <MudCardContent>
+                            <MudText><strong>Inputs:</strong></MudText>
+                            <InputItemsList InputViewModels="_inputViewModels" />
                         </MudCardContent>
                     </MudCard>
                 </MudItem>
@@ -57,6 +74,7 @@
 
     private IOrionDevice _device;
     private List<RelayViewModel> _relayViewModels = [];
+    private List<InputViewModel> _inputViewModels = [];
 
     protected override void OnInitialized()
     {
@@ -76,6 +94,15 @@
             {
                 var relayVM = new RelayViewModel(relay);
                 _relayViewModels.Add(relayVM);
+            }
+        }
+
+        if (_device is IShleifs)
+        {
+            foreach (var shleif in ((IShleifs)_device).Shleifs)
+            {
+                var inputVM = new InputViewModel(shleif);
+                _inputViewModels.Add(inputVM);
             }
         }
     }

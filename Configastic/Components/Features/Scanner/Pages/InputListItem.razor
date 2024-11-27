@@ -1,0 +1,68 @@
+﻿@using MudBlazor.Components.Chart.Models
+@using Configastic.Components.Features.Scanner.Pages.ViewModels
+
+<MudListItem T="string">
+    <MudGrid>
+        <MudItem xs="2">
+            <MudText>Input: @Instance.InputIndex</MudText>
+            <MudText>AddressRS485</MudText>
+        </MudItem>
+        <MudItem xs="10" Class="d-flex justify-end">
+            <MudTimeSeriesChart ChartSeries="@_series"
+                
+                                @bind-SelectedIndex="Index" 
+                                Width="100%" 
+                                Height="100px" 
+                                ChartOptions="@_options" 
+                                
+                                TimeLabelSpacing="TimeSpan.FromMinutes(5)" />
+        </MudItem>
+    </MudGrid>
+</MudListItem>
+
+@code {
+    [Parameter, EditorRequired]
+    public required InputViewModel Instance { get; set; }
+
+    [Parameter]
+    public bool IsSelected { get; set; }
+
+    private int Index = -1; //default value cannot be 0 -> first selectedindex is 0.
+    private List<TimeSeriesChartSeries> _series = new();
+
+
+    private TimeSeriesChartSeries _chart1 = new();
+
+    private readonly Random _random = new Random();
+
+    private ChartOptions _options = new ChartOptions
+    {
+        YAxisLines = false,
+        YAxisTicks = 4,
+        MaxNumYAxisTicks = 4,
+        YAxisRequireZeroPoint = true,
+        XAxisLines = false,
+        LineStrokeWidth = 1,
+        ShowLegend = false,
+    };
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        var now = DateTime.Now;
+
+        _chart1 = new TimeSeriesChartSeries
+        {
+            Index = 0,
+            Name = "Series 1",
+            Data = Enumerable.Range(-360, 360).Select(x => new TimeSeriesChartSeries.TimeValue(now.AddSeconds(x * 10), _random.Next(60, 150))).ToList(),
+            IsVisible = true,
+            Type = TimeSeriesDiplayType.Line
+        };
+
+        _series.Add(_chart1);
+
+        StateHasChanged();
+    }
+}
