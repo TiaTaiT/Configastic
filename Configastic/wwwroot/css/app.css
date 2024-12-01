@@ -84,3 +84,21 @@ h1:focus {
         padding-left: env(safe-area-inset-left);
     }
 }
+
+.MudGrid {
+    width: 100%;
+}
+
+.MudItem {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
+}
+
+/* Force TimeSeriesChart to stretch */
+.time-series-chart {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex-grow: 1;
+}

@@ -14,10 +14,34 @@ namespace Configastic.Components.Features.Scanner.Pages.ViewModels
 
         public int InputIndex { get; set; }
 
+        private IDispatcher? _dispatcher;
+        private bool _isToggled;
+        public bool IsToggled
+        {
+            get => _isToggled;
+            set
+            {
+                _isToggled = value;
+                Task.Run(() => InputHandler());
+            }
+        }
+
+        public byte AdcValue { get; private set; }
+
+        private async Task InputHandler()
+        {
+            while (IsToggled)
+            {
+                
+                AdcValue = await _input.GetShleifAdcValue();
+            }
+        }
+
         public InputViewModel(Shleif input)
         {
             _input = input;
             InputIndex = _input.ShleifIndex;
+            _dispatcher = Dispatcher.GetForCurrentThread();
         }
     }
 }

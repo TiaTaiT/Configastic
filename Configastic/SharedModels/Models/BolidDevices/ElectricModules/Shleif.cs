@@ -2,37 +2,12 @@
 
 namespace Configastic.SharedModels.Models.BolidDevices.ElectricModules
 {
-    public class Shleif
+    public class Shleif: IShleif
     {
         private const int shleifValueIndex = 2;
         private const int getAdcValueCode = 0x1B;
         private const int getAdcState = 0x19;
         private readonly IOrionDevice _parentDevice;
-
-        public enum InputTypes : byte
-        {
-            SmokeFire = 0,
-            CombinedFire = 1,
-            HeatFire = 2,
-            Intrusion = 3,
-            IntrusionAndTamper = 4,
-            Auxilary = 5,
-            Lobby = 6,
-            Panic = 10,
-            AuxProgrammable = 11,
-            FireManualCallPoint = 15,
-            FloodAlarm = 16,
-            ManualRelease = 17
-        }
-
-        public enum States : byte
-        {
-            UnderGuard = 24, // Взят
-            RemovedGuard = 109, // Снят
-            Alarm = 3, // Тревога
-            TakeFailed = 17, // Невзятие
-            Unknow = 0 // неопознан
-        }
 
         /// <summary>
         /// Input number Input 1, Input 2, ... Input 20 

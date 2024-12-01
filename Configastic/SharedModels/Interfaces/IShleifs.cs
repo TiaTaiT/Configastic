@@ -4,6 +4,6 @@ namespace Configastic.SharedModels.Interfaces
 {
     internal interface IShleifs
     {
-        public IEnumerable<Shleif> Shleifs { get; set; }
+        IEnumerable<Shleif> Shleifs { get; set; }
     }
 }

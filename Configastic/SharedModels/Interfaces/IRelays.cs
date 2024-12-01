@@ -4,6 +4,6 @@ namespace Configastic.SharedModels.Interfaces
 {
     internal interface IRelays
     {
-        public IEnumerable<Relay> Relays { get; set; }
+        IEnumerable<Relay> Relays { get; set; }
     }
 }

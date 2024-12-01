@@ -11,61 +11,64 @@
 @inject NavigationManager NavigationManager
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="pa-4">
-    <MudPaper Elevation="3" Class="pa-4">
-        <MudGrid>
-            <MudItem xs="12">
-                <MudText Typo="Typo.h6" Class="mb-4">Device Features</MudText>
-            </MudItem>
+    @if (_device != null)
+    {
+        @if (_device is IRelays relaysDevice)
+        {
+            <MudPaper Elevation="3" Class="pa-4 mb-4">
+                <MudText Typo="Typo.h6">Relays</MudText>
+                <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
+                    @foreach (var relay in relaysDevice.Relays)
+                    {
+                        <MudButton OnClick="() => ControlRelay(relay)">
+                            Relay @(relay.RelayIndex)
+                        </MudButton>
+                    }
+                </MudButtonGroup>
+            </MudPaper>
+        }
 
-            @if (_device != null)
-            {
-                <MudItem xs="12">
-                    <MudCard>
-                        <MudCardContent>
-                            
-                            <MudList 
-                            Dense="true"
-                            T="object"
-                            >
-                                <MudListItem>
-                                    <MudText><strong>Model:</strong> @_device.Model</MudText>
-                                </MudListItem>
-                                <MudListItem>
-                                    <MudText><strong>Address RS485:</strong> @_device.AddressRS485</MudText>
-                                </MudListItem>
-
-                                
-                            </MudList>
-                        </MudCardContent>
-                    </MudCard>
-                    
-                </MudItem>
-                <MudItem xs="12" >
-                    <MudCard>
-                        <MudCardContent>
-                            <MudText><strong>Relays:</strong></MudText>
-                            <RelayItemsList RelaysViewModels="_relayViewModels" />
-                        </MudCardContent>
-                    </MudCard>
-                </MudItem>
-                <MudItem xs="12">
-                    <MudCard>
-                        <MudCardContent>
-                            <MudText><strong>Inputs:</strong></MudText>
-                            <InputItemsList InputViewModels="_inputViewModels" />
-                        </MudCardContent>
-                    </MudCard>
-                </MudItem>
-            }
-        </MudGrid>
-
-        <MudButton Color="Color.Primary" 
-        Variant="Variant.Filled" 
-        OnClick="NavigateBack" 
-        Class="mt-4">
-            Back to Scanner
-        </MudButton>
-    </MudPaper>
+        @if (_device is IShleifs shleifsDevice)
+        {
+            <MudPaper Elevation="3" Class="pa-4">
+                <MudText Typo="Typo.h6">Inputs</MudText>
+                <MudGrid>
+                    @foreach (var shleif in shleifsDevice.Shleifs)
+                    {
+                        <MudItem xs="12">
+                            <MudPaper Elevation="2" Class="d-flex align-center pa-4">
+                                <MudItem xs="3">
+                                    <MudText>Input @(shleif.ShleifIndex)</MudText>
+                                    <MudIcon Icon="@(shleif == _selectedShleif && _isAdcCollecting
+                                                    ? Icons.Material.Filled.Circle
+                                                    : Icons.Material.Outlined.Circle)"
+                                    Color="@(shleif == _selectedShleif && _isAdcCollecting
+                                                      ? Color.Success
+                                                      : Color.Default)" />
+                                </MudItem>
+                                <MudItem xs="9">
+                                    <MudChart @key="shleif"
+                                    ChartType="ChartType.Line"
+                                    ChartSeries="@GetChartSeriesForShleif(shleif)"
+                                    XAxisType="XAxisType.Logarithmic"
+                                    Height="200px"
+                                    Width="100%"
+                                    Class="hide-legend"
+                                    />
+                                    <style>
+                                        .hide-legend .mud-chart-legend {
+                                            display: none !important;
+                                        }
+                                    </style>
+                                </MudItem>
+                                <MudButton OnClick="() => SelectShleif(shleif)">Select</MudButton>
+                            </MudPaper>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudPaper>
+        }
+    }
 </MudContainer>
 
 @code {
@@ -73,13 +76,15 @@
     public string DeviceId { get; set; }
 
     private IOrionDevice _device;
-    private List<RelayViewModel> _relayViewModels = [];
-    private List<InputViewModel> _inputViewModels = [];
+    private IShleif _selectedShleif;
+    private bool _isAdcCollecting;
+    private Dictionary<IShleif, List<ChartSeries>> _shleifChartData = new();
+    private Dictionary<IShleif, Timer> _adcTimers = new();
+    private Dictionary<IShleif, CancellationTokenSource> _adcCancellationTokenSources = new();
 
     protected override void OnInitialized()
     {
-        base.OnInitialized();  // Add this line to properly initialize FluxorComponent
-
+        base.OnInitialized();
         _device = ScanningState.Value.FoundDevices
             .FirstOrDefault(d => d.Id == int.Parse(DeviceId));
 
@@ -88,27 +93,128 @@
             NavigateBack();
         }
 
-        if(_device is IRelays)
+        // Initialize chart data for each shleif
+        if (_device is IShleifs shleifsDevice)
         {
-            foreach (var relay in ((IRelays)_device).Relays)
+            foreach (var shleif in shleifsDevice.Shleifs)
             {
-                var relayVM = new RelayViewModel(relay);
-                _relayViewModels.Add(relayVM);
+                _shleifChartData[shleif] = new List<ChartSeries>
+                {
+                    new ChartSeries
+                    {
+                        Name = $"Input {shleif.ShleifIndex} ADC",
+                        Data = new double[] { }
+                    }
+                };
             }
         }
+    }
 
-        if (_device is IShleifs)
+    private List<ChartSeries> GetChartSeriesForShleif(IShleif shleif)
+    {
+        return _shleifChartData.ContainsKey(shleif)
+            ? _shleifChartData[shleif]
+            : new List<ChartSeries>();
+    }
+
+    private void SelectShleif(IShleif shleif)
+    {
+        // Stop any existing timer
+        StopAdcCollection();
+
+        // Set the selected shleif
+        _selectedShleif = shleif;
+
+        // Start ADC collection for the selected shleif
+        StartAdcCollection(shleif);
+    }
+
+    private void StartAdcCollection(IShleif shleif)
+    {
+        // Create a new cancellation token source for this shleif
+        var cts = new CancellationTokenSource();
+        _adcCancellationTokenSources[shleif] = cts;
+
+        // Create a new timer for this shleif
+        var timer = new Timer(
+            _ => InvokeAsync(() => CollectAdcValue(shleif)).Wait(),
+            null,
+            TimeSpan.Zero,
+            TimeSpan.FromSeconds(1)
+        );
+        _adcTimers[shleif] = timer;
+
+        // Set ADC collection flag
+        _isAdcCollecting = true;
+    }
+
+    private async Task CollectAdcValue(IShleif shleif)
+    {
+        try
         {
-            foreach (var shleif in ((IShleifs)_device).Shleifs)
+            var adcValue = await shleif.GetShleifAdcValue();
+
+            await InvokeAsync(() =>
             {
-                var inputVM = new InputViewModel(shleif);
-                _inputViewModels.Add(inputVM);
-            }
+                // Update only the chart data for the selected shleif
+                if (_shleifChartData.ContainsKey(shleif))
+                {
+                    var chartSeries = _shleifChartData[shleif];
+                    chartSeries[0].Data = chartSeries[0].Data.Append(adcValue).ToArray();
+                    StateHasChanged();
+                }
+            });
         }
+        catch (Exception)
+        {
+            StopAdcCollection();
+        }
+    }
+
+    private void StopAdcCollection()
+    {
+        // Stop and dispose of all existing timers and cancellation sources
+        foreach (var timer in _adcTimers.Values)
+        {
+            timer?.Dispose();
+        }
+        _adcTimers.Clear();
+
+        foreach (var cts in _adcCancellationTokenSources.Values)
+        {
+            cts?.Cancel();
+        }
+        _adcCancellationTokenSources.Clear();
+
+        // Reset ADC collection flag
+        _isAdcCollecting = false;
+    }
+
+    private async Task ControlRelay(IRelay relay)
+    {
+        StopAdcCollection();
+        var currentState = await DetermineRelayState(relay);
+
+        if (currentState)
+            await relay.TurnOffAsync();
+        else
+            await relay.TurnOnAsync();
+    }
+
+    private async Task<bool> DetermineRelayState(IRelay relay)
+    {
+        // Implement logic to determine current relay state if possible
+        // This might require additional interface methods or state tracking
+        return await relay.GetCurrentRelayState(); // Placeholder
     }
 
     private void NavigateBack()
     {
         NavigationManager.NavigateTo("/scanner");
+    }
+
+    public void Dispose()
+    {
+        StopAdcCollection();
     }
 }
