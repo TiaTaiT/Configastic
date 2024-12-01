@@ -193,19 +193,12 @@
     private async Task ControlRelay(IRelay relay)
     {
         StopAdcCollection();
-        var currentState = await DetermineRelayState(relay);
+        var currentState = await relay.GetCurrentRelayState();
 
         if (currentState)
             await relay.TurnOffAsync();
         else
             await relay.TurnOnAsync();
-    }
-
-    private async Task<bool> DetermineRelayState(IRelay relay)
-    {
-        // Implement logic to determine current relay state if possible
-        // This might require additional interface methods or state tracking
-        return await relay.GetCurrentRelayState(); // Placeholder
     }
 
     private void NavigateBack()
