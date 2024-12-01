@@ -140,7 +140,7 @@
             _ => InvokeAsync(() => CollectAdcValue(shleif)).Wait(),
             null,
             TimeSpan.Zero,
-            TimeSpan.FromSeconds(1)
+            TimeSpan.FromMilliseconds(200)
         );
         _adcTimers[shleif] = timer;
 
