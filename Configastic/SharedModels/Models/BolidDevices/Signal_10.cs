@@ -3,7 +3,7 @@ using Configastic.SharedModels.Models.BolidDevices.ElectricModules;
 
 namespace Configastic.SharedModels.Models.BolidDevices
 {
-    public class Signal_10 : OrionDevice
+    public class Signal_10 : OrionDevice, IRelays, IShleifs
     {
         private readonly int inputsCount = 10;
         private readonly int relayNumber = 2;
