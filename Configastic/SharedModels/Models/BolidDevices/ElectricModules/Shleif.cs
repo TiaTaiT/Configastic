@@ -131,19 +131,17 @@ namespace Configastic.SharedModels.Models.BolidDevices.ElectricModules
         /// Get current Analog-to-Digital converter value
         /// </summary>
         /// <returns>ADC current value</returns>
-        public async Task<byte> GetShleifAdcValue()
+        public async Task<byte> GetShleifAdcValueAsync()
         {
-            var serialPort = _parentDevice.Port;
             var address = (byte)_parentDevice.AddressRS485;
-            var adcValue = await _parentDevice.AddressTransactionAsync(address, new byte[] { getAdcValueCode, ShleifIndex, 0x00 }, IOrionNetTimeouts.Timeouts.addressChanging);
+            var adcValue = await _parentDevice.AddressTransactionAsync(address, [getAdcValueCode, ShleifIndex, 0x00], IOrionNetTimeouts.Timeouts.addressChanging);
             return adcValue[shleifValueIndex];
         }
 
-        public async Task<States> GetShleifState()
+        public async Task<States> GetShleifStateAsync()
         {
-            var serialPort = _parentDevice.Port;
             var address = (byte)_parentDevice.AddressRS485;
-            var adcValue = await _parentDevice.AddressTransactionAsync(address, new byte[] { getAdcState, ShleifIndex, 0x00 }, IOrionNetTimeouts.Timeouts.addressChanging);
+            var adcValue = await _parentDevice.AddressTransactionAsync(address, [getAdcState, ShleifIndex, 0x00], IOrionNetTimeouts.Timeouts.addressChanging);
             return adcValue[shleifValueIndex] switch
             {
                 (byte)States.Alarm => States.Alarm,

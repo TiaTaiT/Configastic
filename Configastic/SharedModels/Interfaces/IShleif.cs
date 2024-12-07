@@ -124,8 +124,8 @@ namespace Configastic.SharedModels.Interfaces
         /// Get current Analog-to-Digital converter value
         /// </summary>
         /// <returns>ADC current value</returns>
-        Task<byte> GetShleifAdcValue();
+        Task<byte> GetShleifAdcValueAsync();
 
-        Task<States> GetShleifState();
+        Task<States> GetShleifStateAsync();
     }
 }

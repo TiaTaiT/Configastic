@@ -33,7 +33,7 @@ namespace Configastic.Components.Features.Scanner.Pages.ViewModels
             while (IsToggled)
             {
                 
-                AdcValue = await _input.GetShleifAdcValue();
+                AdcValue = await _input.GetShleifAdcValueAsync();
             }
         }
 
