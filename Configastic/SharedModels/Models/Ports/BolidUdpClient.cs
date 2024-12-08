@@ -9,7 +9,7 @@ namespace Configastic.SharedModels.Models.Ports
     public class BolidUdpClient(IPAddress ip, int remoteUdpPort, int clientUdpPort) : IPort
     {
         private const int ACTUAL_PACKET_LENGTH_INDEX = 1;
-        private readonly UdpClient _udpClient = new();
+        private UdpClient _udpClient = new ();
         private byte _commandCounter = 0x01;
 
         public int MaxRepetitions { get; set; } = 15;
@@ -24,48 +24,59 @@ namespace Configastic.SharedModels.Models.Ports
 
         public int Timeout { get; set; } = 100;
 
+        public bool Init()
+        {
+            try
+            {
+                _udpClient = new UdpClient(new IPEndPoint(IPAddress.Any, ClientUdpPort));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+            return false;
+        }
+
         public async Task<byte[]> SendAsync(byte[] packet)
         {
-            using (var udpClient = new UdpClient(new IPEndPoint(IPAddress.Any, ClientUdpPort))) // Bind to any available local port
+            try
             {
-                try
+                byte[] complitePacket = GetCompleteUdpPacket(packet);
+                var serverEndPoint = new IPEndPoint(RemoteServerIp, RemoteServerUdpPort);
+
+                for (int attempt = 1; attempt <= MaxRepetitions; attempt++)
                 {
-                    byte[] complitePacket = GetCompleteUdpPacket(packet);
-                    var serverEndPoint = new IPEndPoint(RemoteServerIp, RemoteServerUdpPort);
+                    // Send the message
+                    await _udpClient.SendAsync(complitePacket, complitePacket.Length, serverEndPoint);
 
-                    for (int attempt = 1; attempt <= MaxRepetitions; attempt++)
+                    // Wait for the acknowledgment with timeout
+                    var receiveTask = ReceiveWithTimeoutAsync(_udpClient, ReceiveTimeout);
+                    var result = await receiveTask;
+
+                    if (result.Received)
                     {
-                        // Send the message
-                        await udpClient.SendAsync(complitePacket, complitePacket.Length, serverEndPoint);
-
-                        // Wait for the acknowledgment with timeout
-                        var receiveTask = ReceiveWithTimeoutAsync(udpClient, ReceiveTimeout);
-                        var result = await receiveTask;
-
-                        if (result.Received)
+                        // Received a response
+                        var response = result.Buffer.Skip(5).ToArray();
+                        return response; // Success, exit the method
+                    }
+                    else
+                    {
+                        // Timeout occurred
+                        if (attempt < MaxRepetitions)
                         {
-                            // Received a response
-                            var response = result.Buffer.Skip(5).ToArray();
-                            return response; // Success, exit the method
+                            await Task.Delay(Timeout);
                         }
                         else
                         {
-                            // Timeout occurred
-                            if (attempt < MaxRepetitions)
-                            {
-                                await Task.Delay(Timeout);
-                            }
-                            else
-                            {
-                                return [];
-                            }
+                            return [];
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex.Message);
-                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
             }
             return [];
         }

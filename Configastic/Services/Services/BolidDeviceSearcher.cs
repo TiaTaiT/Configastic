@@ -67,6 +67,7 @@ namespace Configastic.Services.Services
             {
                 RemoteServerUdpPort = remoteUdpPort,
             };
+            port.Init();
             return new C2000M(port);
         }
     }

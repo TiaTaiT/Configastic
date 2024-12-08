@@ -40,31 +40,23 @@
                                 <MudItem xs="3">
                                     <MudText>Input @(shleif.ShleifIndex)</MudText>
                                     <MudIcon Icon="@(shleif == _selectedShleif && _isAdcCollecting
-                                                    ? Icons.Material.Filled.Circle
-                                                    : Icons.Material.Outlined.Circle)"
-                                    Color="@(shleif == _selectedShleif && _isAdcCollecting
-                                                      ? Color.Success
-                                                      : Color.Default)" />
+                                ? Icons.Material.Filled.Circle
+                                : Icons.Material.Outlined.Circle)"
+                                             Color="@(shleif == _selectedShleif && _isAdcCollecting
+                                ? Color.Success
+                                : Color.Default)" />
                                 </MudItem>
                                 <MudItem xs="9">
-                                    <MudChart @key="shleif"
-                                    ChartType="ChartType.Line"
-                                    ChartSeries="@GetChartSeriesForShleif(shleif)"
-                                    XAxisType="XAxisType.Logarithmic"
-                                    Height="200px"
-                                    Width="100%"
-                                    Class="hide-legend"
-                                    />
-                                    <style>
-                                        .hide-legend .mud-chart-legend {
-                                            display: none !important;
-                                        }
-                                    </style>
+                                    <ChartItem @ref="_tempChartRef"
+                                               Shleif="shleif"
+                                               CTS="_cts"
+                                               OnRegister="chart => RegisterChart(shleif, chart)" />
                                 </MudItem>
                                 <MudButton OnClick="() => SelectShleif(shleif)">Select</MudButton>
                             </MudPaper>
                         </MudItem>
                     }
+
                 </MudGrid>
             </MudPaper>
         }
@@ -77,10 +69,29 @@
 
     private IOrionDevice _device;
     private IShleif _selectedShleif;
+    private CancellationTokenSource _cts;
     private bool _isAdcCollecting;
-    private Dictionary<IShleif, List<ChartSeries>> _shleifChartData = new();
-    private Dictionary<IShleif, Timer> _adcTimers = new();
-    private Dictionary<IShleif, CancellationTokenSource> _adcCancellationTokenSources = new();
+    private Dictionary<IShleif, ChartItem> _chartRefs = new();
+    private ChartItem _tempChartRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_tempChartRef != null && _selectedShleif != null && !_chartRefs.ContainsKey(_selectedShleif))
+        {
+            _chartRefs[_selectedShleif] = _tempChartRef;
+            _tempChartRef = null; // Reset temporary ref after use
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private void RegisterChart(IShleif shleif, ChartItem chart)
+    {
+        if (!_chartRefs.ContainsKey(shleif))
+        {
+            _chartRefs[shleif] = chart;
+        }
+    }
 
     protected override void OnInitialized()
     {
@@ -93,101 +104,38 @@
             NavigateBack();
         }
 
-        // Initialize chart data for each shleif
-        if (_device is IShleifs shleifsDevice)
-        {
-            foreach (var shleif in shleifsDevice.Shleifs)
-            {
-                _shleifChartData[shleif] = new List<ChartSeries>
-                {
-                    new ChartSeries
-                    {
-                        Name = $"Input {shleif.ShleifIndex} ADC",
-                        Data = new double[] { }
-                    }
-                };
-            }
-        }
+        _cts = new CancellationTokenSource();
     }
 
-    private List<ChartSeries> GetChartSeriesForShleif(IShleif shleif)
+    private async Task SelectShleif(IShleif shleif)
     {
-        return _shleifChartData.ContainsKey(shleif)
-            ? _shleifChartData[shleif]
-            : new List<ChartSeries>();
-    }
-
-    private void SelectShleif(IShleif shleif)
-    {
-        // Stop any existing timer
+        // Stop any existing ADC collection
         StopAdcCollection();
 
         // Set the selected shleif
         _selectedShleif = shleif;
 
         // Start ADC collection for the selected shleif
-        StartAdcCollection(shleif);
-    }
-
-    private void StartAdcCollection(IShleif shleif)
-    {
-        // Create a new cancellation token source for this shleif
-        var cts = new CancellationTokenSource();
-        _adcCancellationTokenSources[shleif] = cts;
-
-        // Create a new timer for this shleif
-        var timer = new Timer(
-            _ => InvokeAsync(() => CollectAdcValue(shleif)).Wait(),
-            null,
-            TimeSpan.Zero,
-            TimeSpan.FromMilliseconds(200)
-        );
-        _adcTimers[shleif] = timer;
-
-        // Set ADC collection flag
-        _isAdcCollecting = true;
-    }
-
-    private async Task CollectAdcValue(IShleif shleif)
-    {
-        try
+        if (_chartRefs.TryGetValue(shleif, out var chartRef) && chartRef != null)
         {
-            var adcValue = await shleif.GetShleifAdcValueAsync();
-
-            await InvokeAsync(() =>
-            {
-                // Update only the chart data for the selected shleif
-                if (_shleifChartData.ContainsKey(shleif))
-                {
-                    var chartSeries = _shleifChartData[shleif];
-                    chartSeries[0].Data = chartSeries[0].Data.Append(adcValue).ToArray();
-                    StateHasChanged();
-                }
-            });
-        }
-        catch (Exception)
-        {
-            StopAdcCollection();
+            chartRef.Shleif = shleif;
+            chartRef.CTS = _cts;
+            _isAdcCollecting = true;
+            StateHasChanged();
+            await chartRef.StartAdcValueCollectionAsync();
         }
     }
 
     private void StopAdcCollection()
     {
-        // Stop and dispose of all existing timers and cancellation sources
-        foreach (var timer in _adcTimers.Values)
-        {
-            timer?.Dispose();
-        }
-        _adcTimers.Clear();
-
-        foreach (var cts in _adcCancellationTokenSources.Values)
-        {
-            cts?.Cancel();
-        }
-        _adcCancellationTokenSources.Clear();
-
-        // Reset ADC collection flag
         _isAdcCollecting = false;
+
+        if (_cts != null && !_cts.IsCancellationRequested)
+        {
+            _cts.Cancel();
+            _cts.Dispose();
+            _cts = new CancellationTokenSource();
+        }
     }
 
     private async Task ControlRelay(IRelay relay)

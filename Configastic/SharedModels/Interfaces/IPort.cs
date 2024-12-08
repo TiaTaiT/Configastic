@@ -24,5 +24,11 @@
         /// </summary>
         /// <param name="data">Raw translate data</param>
         Task SendWithoutСonfirmationAsync(byte[] data);
+
+        /// <summary>
+        /// Port initialization
+        /// </summary>
+        /// <returns>true if initialisation has campleted, false otherwise</returns>
+        bool Init();
     }
 }

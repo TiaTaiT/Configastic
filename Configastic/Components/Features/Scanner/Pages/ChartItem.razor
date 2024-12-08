@@ -1,0 +1,102 @@
+﻿@using Configastic.SharedModels.Interfaces
+@using System.Diagnostics
+<MudChart @key="Shleif"
+ChartType="ChartType.Line"
+ChartSeries="@_shleifChartData"
+XAxisType="XAxisType.Logarithmic"
+Height="200px"
+Width="100%"
+Class="hide-legend"
+/>
+<style>
+    .hide-legend .mud-chart-legend {
+    display: none !important;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public IShleif Shleif { get; set; }
+
+    [Parameter]
+    public CancellationTokenSource CTS { get; set; }
+
+    private List<ChartSeries> _shleifChartData = new()
+    {
+        new ChartSeries {Name = "Fossil", Data = new double[] { 0, 25 }}
+    };
+
+    [Parameter] public EventCallback<ChartItem> OnRegister { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        OnRegister.InvokeAsync(this);
+        return base.OnInitializedAsync();
+    }
+
+    private void UpdateChart(byte adcValue)
+    {
+        // Retrieve the existing data, append the new value, and reassign the data
+        var updatedData = _shleifChartData[0].Data.Append(adcValue).ToArray();
+        _shleifChartData[0] = new ChartSeries
+            {
+                Name = _shleifChartData[0].Name,
+                Data = updatedData
+            };
+
+        // Reassign the entire chart data list to trigger a UI update
+        _shleifChartData = new List<ChartSeries>(_shleifChartData);
+        StateHasChanged(); // Notify Blazor of the state change
+    }
+
+    public async Task StartAdcValueCollectionAsync()
+    {
+        //if (!IsRunning) return; // Prevent multiple concurrent executions
+
+        try
+        {
+            while (!CTS.IsCancellationRequested)
+            {
+                try
+                {
+                    // Call GetShleifAdcValueAsync and add the result to the ADC values list
+                    byte adcValue = await Shleif.GetShleifAdcValueAsync();
+                    //_adcValues.Add(adcValue);
+
+                    // Update the chart (assuming you're using Blazor-ApexCharts)
+                    await InvokeAsync(() =>
+                    {
+                        UpdateChart(adcValue);
+                    });
+
+                    // Add a delay for real-time sampling frequency, if needed
+                    await Task.Delay(200, CTS.Token); // Example: 100ms interval
+                }
+                catch (OperationCanceledException)
+                {
+                    // Loop cancelled
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error: {ex.Message}");
+                    // Optionally handle other exceptions
+                }
+
+                
+            }
+        }
+        finally
+        {
+            StopAdcValueCollection();
+        }
+    }
+
+    private void StopAdcValueCollection()
+    {
+        if (!CTS.IsCancellationRequested)
+        {
+            //CTS?.Cancel();
+        }
+    }
+}
