@@ -42,15 +42,15 @@
                                     <MudIcon Icon="@(shleif == _selectedShleif && _isAdcCollecting
                                 ? Icons.Material.Filled.Circle
                                 : Icons.Material.Outlined.Circle)"
-                                             Color="@(shleif == _selectedShleif && _isAdcCollecting
+                                    Color="@(shleif == _selectedShleif && _isAdcCollecting
                                 ? Color.Success
                                 : Color.Default)" />
                                 </MudItem>
                                 <MudItem xs="9">
                                     <ChartItem @ref="_tempChartRef"
-                                               Shleif="shleif"
-                                               CTS="_cts"
-                                               OnRegister="chart => RegisterChart(shleif, chart)" />
+                                    Shleif="shleif"
+                                    CTS="_cts"
+                                    OnRegister="chart => RegisterChart(shleif, chart)" />
                                 </MudItem>
                                 <MudButton OnClick="() => SelectShleif(shleif)">Select</MudButton>
                             </MudPaper>
@@ -73,6 +73,7 @@
     private bool _isAdcCollecting;
     private Dictionary<IShleif, ChartItem> _chartRefs = new();
     private ChartItem _tempChartRef;
+    private bool _disposed = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -96,6 +97,7 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
+        NavigationManager.LocationChanged += OnLocationChanged;
         _device = ScanningState.Value.FoundDevices
             .FirstOrDefault(d => d.Id == int.Parse(DeviceId));
 
@@ -151,11 +153,20 @@
 
     private void NavigateBack()
     {
+        Dispose();
         NavigationManager.NavigateTo("/scanner");
+    }
+
+    private void OnLocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        Dispose();
     }
 
     public void Dispose()
     {
+        if (_disposed) return;
+        NavigationManager.LocationChanged -= OnLocationChanged;
         StopAdcCollection();
+        _disposed = true;
     }
 }
