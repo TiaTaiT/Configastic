@@ -1,0 +1,38 @@
+﻿@page "/google-projects"
+@using Configastic.Components.Features.GoogleProjects.Models
+@using Configastic.Components.Features.GoogleProjects.Store
+@using Fluxor
+@inject IState<ProjectHeaderState> ProjectHeaderState
+
+<MudContainer>
+    <MudTextField @bind-Value="_searchTerm" 
+                  Placeholder="Search Projects" 
+                  Adornment="Adornment.Start"
+                  AdornmentIcon="@Icons.Material.Filled.Search"
+                  OnAdornmentClick="FilterProjects"
+                  Class="mb-3"
+                  Immediate="true"/>
+
+    <MudStack>
+        @foreach (var project in FilteredProjects)
+        {
+            <ProjectHeaderItem ProjectHeader="@project" />
+        }
+    </MudStack>
+</MudContainer>
+
+@code {
+    private string _searchTerm = string.Empty;
+
+    private IEnumerable<ProjectHeader> FilteredProjects => 
+        ProjectHeaderState.Value.Projects
+            .Where(p => string.IsNullOrEmpty(_searchTerm) || 
+                        p.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) || 
+                        p.ProjectNumber.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase));
+
+    private void FilterProjects()
+    {
+        // Trigger a re-render
+        StateHasChanged();
+    }
+}

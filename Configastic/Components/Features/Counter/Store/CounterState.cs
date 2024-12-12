@@ -1,18 +1,4 @@
-﻿
-/* Unmerged change from project 'Configastic (net8.0-android)'
-Before:
-using Fluxor;
-After:
-using Configastic;
-using Configastic.Components;
-using Configastic.Components.Features;
-using Configastic.Components.Features.Counter;
-using Configastic.Components.Features.Counter.Store;
-using Configastic.Components.Features.Counter.Store;
-using Configastic.Components.Features.Counter.Store.CounterUseCase;
-using Fluxor;
-*/
-using Fluxor;
+﻿using Fluxor;
 
 namespace Configastic.Components.Features.Counter.Store
 {

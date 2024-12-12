@@ -1,0 +1,43 @@
+﻿@using Configastic.Components.Features.GoogleProjects.Models
+@using Configastic.Components.Features.GoogleProjects.Store
+@using Fluxor
+@inject IState<ProjectHeaderState> ProjectHeaderState
+@inject IDispatcher Dispatcher
+
+<MudCard Class="my-2">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">@ProjectHeader.ProjectNumber - @ProjectHeader.Name</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <MudToggleIconButton 
+                @bind-Toggled="IsCheckedIn"
+                Icon="@Icons.Material.Filled.LockOpen" 
+                ToggledIcon="@Icons.Material.Filled.Lock"
+                Color="@(IsCheckedIn ? Color.Primary : Color.Default)"
+            />
+        </CardHeaderActions>
+    </MudCardHeader>
+</MudCard>
+
+@code {
+    [Parameter]
+    public ProjectHeader ProjectHeader { get; set; }
+
+    private bool _isCheckedIn;
+    private bool IsCheckedIn
+    {
+        get => ProjectHeaderState.Value.CurrentCheckedInProject?.ProjectNumber == ProjectHeader.ProjectNumber;
+        set
+        {
+            if (value && ProjectHeaderState.Value.CurrentCheckedInProject == null)
+            {
+                Dispatcher.Dispatch(new CheckInProjectAction(ProjectHeader));
+            }
+            else if (!value)
+            {
+                Dispatcher.Dispatch(new CheckOutProjectAction(ProjectHeader));
+            }
+        }
+    }
+}

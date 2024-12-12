@@ -1,4 +1,5 @@
-﻿using Configastic.Services.Interfaces;
+﻿using Configastic.Components.Features.GoogleProjects.Store;
+using Configastic.Services.Interfaces;
 using Configastic.Services.Services;
 using Fluxor;
 using Microsoft.Extensions.Logging;
@@ -21,7 +22,7 @@ namespace Configastic
             builder.Services.AddMauiBlazorWebView();
 
 #if DEBUG
-    		builder.Services.AddBlazorWebViewDeveloperTools();
+    		//builder.Services.AddBlazorWebViewDeveloperTools();
     		builder.Logging.AddDebug();
 #endif
 
@@ -30,6 +31,7 @@ namespace Configastic
 
             builder.Services.AddScoped<IDeviceScanningService,DeviceScanningService>();
             builder.Services.AddScoped<IDeviceSearcher, BolidDeviceSearcher>();
+            builder.Services.AddSingleton<ProjectHeaderState>();
 
             builder.Services.AddMudServices();
             builder.Services.AddMudBlazorDialog();
