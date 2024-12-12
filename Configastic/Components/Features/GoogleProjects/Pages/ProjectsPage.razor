@@ -5,13 +5,25 @@
 @inject IState<ProjectHeaderState> ProjectHeaderState
 
 <MudContainer>
-    <MudTextField @bind-Value="_searchTerm" 
-                  Placeholder="Search Projects" 
-                  Adornment="Adornment.Start"
-                  AdornmentIcon="@Icons.Material.Filled.Search"
-                  OnAdornmentClick="FilterProjects"
-                  Class="mb-3"
-                  Immediate="true"/>
+    <MudGrid>
+        <MudItem xs="10">
+            <MudTextField @bind-Value="_searchTerm"
+                          Placeholder="Search Projects"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          OnAdornmentClick="FilterProjects"
+                          Class="mb-3"
+                          Immediate="true" />
+        </MudItem>
+        <MudItem xs="2">
+            <MudToggleIconButton Toggled="_showCheckedInOnly"
+                                 ToggledChanged="ToggleCheckedInFilter"
+                                 Icon="@Icons.Material.Filled.FilterList"
+                                 ToggledIcon="@Icons.Material.Filled.FilterListOff"
+                                 Color="@(_showCheckedInOnly ? Color.Primary : Color.Default)"
+                                 Class="mt-1" />
+        </MudItem>
+    </MudGrid>
 
     <MudStack>
         @foreach (var project in FilteredProjects)
@@ -23,16 +35,28 @@
 
 @code {
     private string _searchTerm = string.Empty;
+    private bool _showCheckedInOnly;
 
-    private IEnumerable<ProjectHeader> FilteredProjects => 
+    private IEnumerable<ProjectHeader> FilteredProjects =>
         ProjectHeaderState.Value.Projects
-            .Where(p => string.IsNullOrEmpty(_searchTerm) || 
-                        p.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) || 
-                        p.ProjectNumber.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase));
+            .Where(p =>
+                // Filter by search term (if applicable)
+                (string.IsNullOrEmpty(_searchTerm) ||
+                 p.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                 p.ProjectNumber.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase)) &&
+                // Filter by checked-in status
+                (!_showCheckedInOnly ||
+                 ProjectHeaderState.Value.CurrentCheckedInProject?.ProjectNumber == p.ProjectNumber)
+            );
 
     private void FilterProjects()
     {
-        // Trigger a re-render
+        StateHasChanged();
+    }
+
+    private void ToggleCheckedInFilter(bool toggled)
+    {
+        _showCheckedInOnly = toggled;
         StateHasChanged();
     }
 }
