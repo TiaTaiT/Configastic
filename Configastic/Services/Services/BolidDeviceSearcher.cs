@@ -14,6 +14,7 @@ namespace Configastic.Services.Services
             string ip,
             int localUdpPort,
             int remoteUdpPort,
+            int attempts,
             Action<IOrionDevice> onDeviceFound,
             Action cleanDeviceFound,
             CancellationToken cancellationToken)
@@ -36,12 +37,11 @@ namespace Configastic.Services.Services
                 if (newDevice == null)
                     continue;
 
-                var freeAddress = await c2000M.GetFirstFreeAddress(startAddress, onDeviceFound, cleanDeviceFound, cancellationToken);
+                var freeAddress = await c2000M.GetFirstFreeAddress(startAddress, attempts, onDeviceFound, cleanDeviceFound, cancellationToken);
                 if (freeAddress > 0)
                 {
                     newDevice.AddressRS485 = freeAddress;
                     await newDevice.SetAddressAsync();
-                    //_dispatcher.Dispatch(new UpdateFoundDeviceAction(newDevice));
                     onDeviceFound(newDevice);
                 }
             }
@@ -53,12 +53,13 @@ namespace Configastic.Services.Services
             int localUdpPort,
             int remoteUdpPort,
             int startAddress,
+            int attempts,
             Action<IOrionDevice> onDeviceFound,
             Action<double> onProgressUpdate,
             CancellationToken cancellationToken)
         {
             var c2000M = GetOrionManager(ip, localUdpPort, remoteUdpPort);
-            var t = await c2000M.SearchOnlineDevices(startAddress, onDeviceFound, onProgressUpdate, cancellationToken);
+            var t = await c2000M.SearchOnlineDevices(startAddress, attempts, onDeviceFound, onProgressUpdate, cancellationToken);
         }
 
         private static C2000M GetOrionManager(string ip, int localUdpPort, int remoteUdpPort)

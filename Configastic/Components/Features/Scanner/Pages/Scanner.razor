@@ -75,12 +75,14 @@
 @code {
     private bool _isAdvancedMode = false;
     private int _searchRange = 1;
+    private int _attempts = 5;
     private CancellationTokenSource _cts = new CancellationTokenSource();
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
         _defaultPortSettings = Preferences.Default.Get("DefaultOrionPort", false);
+        _attempts = GetAttemptsNumber();
     }
 
     private async Task OnModeToggled(bool value)
@@ -142,6 +144,7 @@
                     localUdp,
                     remoteUdp,
                     _searchRange,
+                    _attempts,
                     device => Dispatcher.Dispatch(new AddFoundDeviceAction(device)),
                     progress => Dispatcher.Dispatch(new UpdateProgressAction(progress)),
                     _cts.Token);
@@ -152,6 +155,7 @@
                 ip,
                 localUdp,
                 remoteUdp,
+                _attempts,
                 device => Dispatcher.Dispatch(new AddFoundDeviceAction(device)),
                 () => Dispatcher.Dispatch(new ClearFoundDeviceAction()),
                 _cts.Token);
@@ -214,5 +218,10 @@
             return Preferences.Default.Get("C2000ethernetIpAddress", "192.168.127.254");
         }
         return Preferences.Default.Get("C2000wifiIpAddress", "10.10.10.1");
+    }
+
+    private int GetAttemptsNumber()
+    {
+        return Preferences.Default.Get("MaxAttemptsRs485Address", 5);
     }
 }

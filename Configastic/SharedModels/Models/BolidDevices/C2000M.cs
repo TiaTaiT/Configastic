@@ -86,6 +86,7 @@ namespace Configastic.SharedModels.Models.BolidDevices
 
         public async Task<byte> GetFirstFreeAddress(
             int startAddress,
+            int attempts,
             Action<IOrionDevice> onDeviceFound,
             Action cleanDeviceFound,
             CancellationToken token)
@@ -97,7 +98,7 @@ namespace Configastic.SharedModels.Models.BolidDevices
 
             var startAddr = GetValidAddress(startAddress);
 
-            Port.MaxRepetitions = 3;
+            Port.MaxRepetitions = attempts;
             byte address = 0;
             cleanDeviceFound();
             for (byte i = startAddr; i < defaultAddress; i++)
@@ -121,6 +122,7 @@ namespace Configastic.SharedModels.Models.BolidDevices
 
         public async Task<IEnumerable<IOrionDevice>> SearchOnlineDevices(
             int startAddress,
+            int attempts,
             Action<IOrionDevice> onDeviceFound, 
             Action<double> progressStatus, 
             CancellationToken token)
@@ -138,7 +140,7 @@ namespace Configastic.SharedModels.Models.BolidDevices
             progressStatus(Convert.ToInt32(_progress));
 
             OnlineDevices.Clear();
-            Port.MaxRepetitions = 3;
+            Port.MaxRepetitions = attempts;
 
             // First of all, we need to check address 127 (default bolid address)
             await CheckDeviceWithProgress(onDeviceFound, progressStatus, (byte)defaultAddress);

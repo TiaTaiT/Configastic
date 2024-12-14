@@ -34,6 +34,7 @@
         <MudExpansionPanel Text="Orion Settings">
             <MudNumericField @bind-Value="OrionRs485defaultAddress" Label="Orion RS-485 Default Address" FullWidth="true" T="int" Min="1" Max="127" />
             <MudNumericField @bind-Value="StartRs485Address" Label="Start RS-485 Address" FullWidth="true" T="int" Min="1" Max="126" />
+            <MudNumericField @bind-Value="MaxAttemptsRs485Address" Label="The maximum number of attempts" FullWidth="true" T="int" Min="1" Max="15" />
         </MudExpansionPanel>
 
     </MudExpansionPanels>
@@ -66,6 +67,7 @@
 
     private int OrionRs485defaultAddress { get; set; } = 127;
     private int StartRs485Address { get; set; } = 3;
+    private int MaxAttemptsRs485Address { get; set; } = 5;
 
     protected override void OnInitialized()
     {
@@ -94,6 +96,7 @@
         Preferences.Default.Set(nameof(C2000wifiRemotePort), C2000wifiRemotePort);
         Preferences.Default.Set(nameof(OrionRs485defaultAddress), OrionRs485defaultAddress);
         Preferences.Default.Set(nameof(StartRs485Address), StartRs485Address);
+        Preferences.Default.Set(nameof(MaxAttemptsRs485Address), MaxAttemptsRs485Address);
     }
 
     private void LoadSettings()
@@ -116,6 +119,7 @@
         C2000wifiRemotePort = Preferences.Default.Get(nameof(C2000wifiRemotePort), 12000);
         OrionRs485defaultAddress = Preferences.Default.Get(nameof(OrionRs485defaultAddress), 127);
         StartRs485Address = Preferences.Default.Get(nameof(StartRs485Address), 3);
+        MaxAttemptsRs485Address = Preferences.Default.Get(nameof(MaxAttemptsRs485Address), 3);
     }
 
 }
