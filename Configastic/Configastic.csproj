@@ -68,15 +68,25 @@
 
     <ItemGroup>
         <PackageReference Include="Fluxor.Blazor.Web" Version="6.1.0" />
-        <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.14" />
-        <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.14" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="9.0.14" />
+        <PackageReference Include="Google.Apis.Auth" Version="1.68.0" />
+        <PackageReference Include="Google.Apis.Drive.v3" Version="1.68.0.3627" />
+        <PackageReference Include="Google.Apis.Sheets.v4" Version="1.68.0.3624" />
+        <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.21" />
+        <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.21" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="9.0.21" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
         <PackageReference Include="MudBlazor" Version="7.15.0" />
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Components\Features\GoogleProjects\Models\" />
       <Folder Include="wwwroot\js\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <MauiAsset Update="Resources\Raw\firm-capsule-441717-e2-2f90d66e4ff2.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </MauiAsset>
     </ItemGroup>
 
 </Project>

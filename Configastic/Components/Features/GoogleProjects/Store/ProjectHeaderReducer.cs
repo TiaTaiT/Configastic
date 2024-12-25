@@ -1,9 +1,23 @@
-﻿using Fluxor;
+﻿using Configastic.SharedModels.Models.Utils;
+using Fluxor;
 
 namespace Configastic.Components.Features.GoogleProjects.Store
 {
     public class ProjectHeaderReducer
     {
+        [ReducerMethod]
+        public static ProjectHeaderState ReduceAddProject(ProjectHeaderState state, AddProjectAction action)
+        {
+            var newProjects = new List<ProjectHeader>(state.Projects) { action.Project };
+            return new ProjectHeaderState(newProjects, state.CurrentCheckedInProject);
+        }
+
+        [ReducerMethod]
+        public static ProjectHeaderState ReduceClearProjects(ProjectHeaderState state, ClearProjectsAction action)
+        {
+            return new ProjectHeaderState(new List<ProjectHeader>(), null);
+        }
+
         [ReducerMethod]
         public static ProjectHeaderState ReduceCheckInProject(ProjectHeaderState state, CheckInProjectAction action)
         {

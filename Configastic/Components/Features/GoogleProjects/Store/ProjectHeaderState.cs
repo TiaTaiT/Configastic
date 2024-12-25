@@ -1,4 +1,4 @@
-﻿using Configastic.Components.Features.GoogleProjects.Models;
+﻿using Configastic.SharedModels.Models.Utils;
 
 namespace Configastic.Components.Features.GoogleProjects.Store
 {

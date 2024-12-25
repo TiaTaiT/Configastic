@@ -33,6 +33,9 @@ namespace Configastic
             builder.Services.AddScoped<IDeviceSearcher, BolidDeviceSearcher>();
             builder.Services.AddSingleton<ProjectHeaderState>();
 
+            builder.Services.AddTransient< IGoogleDriveSheetsLister, GoogleDriveSheetsLister>();
+            //builder.Services.AddTransient< IGoogleSpreadsheetCache, GoogleSpreadsheetCache>();
+
             builder.Services.AddMudServices();
             builder.Services.AddMudBlazorDialog();
 
