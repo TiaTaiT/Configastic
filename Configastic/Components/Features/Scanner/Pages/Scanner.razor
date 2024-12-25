@@ -23,6 +23,7 @@
 
         <MudProgressLinear Color="Color.Primary"
         Value="@ScanningState.Value.Progress"
+        Indeterminate="!ScanningState.Value.ScannerMode && ScanningState.Value.IsScanning"
         Class="my-4" />
 
         @if (@ScanningState.Value.ScannerMode)
@@ -89,6 +90,7 @@
 
     private async Task OnModeToggled(bool value)
     {
+        await OnScanningToggled(false);
         if (value)
         {
             Dispatcher.Dispatch(new SetSearchingModeAction());
