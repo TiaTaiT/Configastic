@@ -72,7 +72,8 @@ namespace Configastic.SharedModels.Models.BolidDevices
                 { 59, () => new OrionDevice(port) },         //"Рупор исп.02" },
                 { 61, () => new OrionDevice(port) },         //"С2000-КДЛ-Modbus" },
                 { 66, () => new OrionDevice(port) },         //"Рупор исп.03" },
-                { 67, () => new OrionDevice(port) }          //"Рупор-300" }
+                { 67, () => new OrionDevice(port) },          //"Рупор-300" }
+                { 81, () => new C2000_Kdl2i_isp1(port) },     //"С2000-КДЛ-2И исп.01" },
             };
         }
 
