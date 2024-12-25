@@ -90,7 +90,10 @@
 
     private async Task OnModeToggled(bool value)
     {
-        await OnScanningToggled(false);
+        if (ScanningState.Value.IsScanning)
+        {
+            await OnScanningToggled(false);
+        }
         if (value)
         {
             Dispatcher.Dispatch(new SetSearchingModeAction());
