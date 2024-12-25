@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/Configastic/Resources/Files/firm-capsule-441717-e2-2f90d66e4ff2.json
+/Configastic/Resources/Raw/firm-capsule-441717-e2-2f90d66e4ff2.json
