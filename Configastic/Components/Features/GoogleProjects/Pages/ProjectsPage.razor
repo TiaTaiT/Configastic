@@ -4,27 +4,29 @@
 @using Fluxor
 @inject IState<ProjectHeaderState> ProjectHeaderState
 
-<MudContainer>
-    <MudGrid>
-        <MudItem xs="10">
-            <MudTextField @bind-Value="_searchTerm"
-                          Placeholder="Search Projects"
-                          Adornment="Adornment.Start"
-                          AdornmentIcon="@Icons.Material.Filled.Search"
-                          OnAdornmentClick="FilterProjects"
-                          Class="mb-3"
-                          Immediate="true" />
-        </MudItem>
-        <MudItem xs="2">
-            <MudToggleIconButton Toggled="_showCheckedInOnly"
-                                 ToggledChanged="ToggleCheckedInFilter"
-                                 Icon="@Icons.Material.Filled.FilterList"
-                                 ToggledIcon="@Icons.Material.Filled.FilterListOff"
-                                 Color="@(_showCheckedInOnly ? Color.Primary : Color.Default)"
-                                 Class="mt-1" />
-        </MudItem>
-    </MudGrid>
 
+<MudContainer >
+    <MudPaper Elevation="3" Class="pa-4 mb-4" Style="position: sticky; top: 0; left: 0; right: 0; z-index: 1;">
+        <MudGrid Class="pa-4">
+            <MudItem xs="10">
+                <MudTextField @bind-Value="_searchTerm"
+                                Placeholder="Search Projects"
+                                Adornment="Adornment.Start"
+                                AdornmentIcon="@Icons.Material.Filled.Search"
+                                OnAdornmentClick="FilterProjects"
+                                Immediate="true"
+                                Class="mt-0" />
+            </MudItem>
+            <MudItem xs="2">
+                <MudToggleIconButton Toggled="_showCheckedInOnly"
+                                        ToggledChanged="ToggleCheckedInFilter"
+                                        Icon="@Icons.Material.Filled.FilterList"
+                                        ToggledIcon="@Icons.Material.Filled.FilterListOff"
+                                        Color="@(_showCheckedInOnly ? Color.Primary : Color.Default)"
+                                        Class="mt-1" />
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
     <MudStack>
         @foreach (var project in FilteredProjects)
         {
