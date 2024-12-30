@@ -68,8 +68,6 @@
     {
         var projectList = await googleDriveSheetsLister.ListAllSpreadsheetsAsync();
 
-        Dispatcher.Dispatch(new ClearProjectsAction());
-
         foreach(var project in projectList)
         {
             Dispatcher.Dispatch(new AddProjectAction(project));

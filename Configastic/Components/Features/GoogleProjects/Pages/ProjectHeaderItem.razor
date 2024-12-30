@@ -11,10 +11,10 @@
         </CardHeaderContent>
         <CardHeaderActions>
             <MudToggleIconButton 
-                @bind-Toggled="IsCheckedIn"
-                Icon="@Icons.Material.Filled.LockOpen" 
-                ToggledIcon="@Icons.Material.Filled.Lock"
-                Color="@(IsCheckedIn ? Color.Primary : Color.Default)"
+            @bind-Toggled="IsCheckedIn"
+            Icon="@Icons.Material.Filled.LockOpen" 
+            ToggledIcon="@Icons.Material.Filled.Lock"
+            Color="@(IsCheckedIn ? Color.Primary : Color.Default)"
             />
         </CardHeaderActions>
     </MudCardHeader>
@@ -27,7 +27,14 @@
     private bool _isCheckedIn;
     private bool IsCheckedIn
     {
-        get => ProjectHeaderState.Value.CurrentCheckedInProject?.ProjectNumber == ProjectHeader.ProjectNumber;
+        get 
+        {
+            var state = ProjectHeaderState.Value.CurrentCheckedInProject?.ProjectNumber;
+            var currentState = ProjectHeader.ProjectNumber;
+            if (state == currentState)
+                return true;
+            return false;
+        }
         set
         {
             if (value && ProjectHeaderState.Value.CurrentCheckedInProject == null)

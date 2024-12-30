@@ -8,6 +8,8 @@ namespace Configastic.Components.Features.GoogleProjects.Store
         [ReducerMethod]
         public static ProjectHeaderState ReduceAddProject(ProjectHeaderState state, AddProjectAction action)
         {
+            if (state.Projects.Any(p => p.Url.Equals(action.Project.Url)))
+                return state;
             var newProjects = new List<ProjectHeader>(state.Projects) { action.Project };
             return new ProjectHeaderState(newProjects, state.CurrentCheckedInProject);
         }
