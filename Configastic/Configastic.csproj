@@ -80,6 +80,7 @@
 
     <ItemGroup>
       <Folder Include="Components\Features\GoogleProjects\Models\" />
+      <Folder Include="Components\Features\ProjectsTree\Store\" />
       <Folder Include="wwwroot\js\" />
     </ItemGroup>
 
